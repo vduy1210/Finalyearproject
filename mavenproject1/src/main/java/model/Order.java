@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class Order {
     private int orderId;
     private int customerId;
+    private int staffId;
     private LocalDateTime orderDate;
     private double totalAmount;
     private double tax;
@@ -12,10 +13,11 @@ public class Order {
 
     public Order() {}
 
-    public Order(int orderId, int customerId, LocalDateTime orderDate,
+    public Order(int orderId, int customerId, int staffId, LocalDateTime orderDate,
                  double totalAmount, double tax, double discount) {
         this.orderId = orderId;
         this.customerId = customerId;
+        this.staffId = staffId;
         this.orderDate = orderDate;
         this.totalAmount = totalAmount;
         this.tax = tax;
@@ -23,7 +25,6 @@ public class Order {
     }
 
     // Getters and Setters
-
     public int getOrderId() {
         return orderId;
     }
@@ -38,6 +39,14 @@ public class Order {
 
     public void setCustomerId(int customerId) {
         this.customerId = customerId;
+    }
+
+    public int getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(int staffId) {
+        this.staffId = staffId;
     }
 
     public LocalDateTime getOrderDate() {
@@ -77,6 +86,7 @@ public class Order {
         return "Order{" +
                 "orderId=" + orderId +
                 ", customerId=" + customerId +
+                ", staffId=" + staffId +
                 ", orderDate=" + orderDate +
                 ", totalAmount=" + totalAmount +
                 ", tax=" + tax +

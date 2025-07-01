@@ -42,18 +42,6 @@ public class DashboardPanel extends JPanel {
         rightPanel.setOpaque(false); // Make transparent
         rightPanel.add(createWidgetCard("List of best-selling products", COLOR_WHITE, Color.BLACK), BorderLayout.CENTER);
 
-        JButton logoutButton = new JButton("Log out");
-        logoutButton.setFont(FONT_WIDGET_TITLE);
-        logoutButton.setBackground(COLOR_LOGOUT);
-        logoutButton.setForeground(COLOR_WHITE);
-        logoutButton.setFocusPainted(false);
-        logoutButton.setBorder(new EmptyBorder(15, 15, 15, 15));
-
-        JPanel logoutWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        logoutWrapper.setOpaque(false);
-        logoutWrapper.add(logoutButton);
-        rightPanel.add(logoutWrapper, BorderLayout.SOUTH);
-
         gbc.gridx = 4;
         gbc.gridy = 0;
         gbc.weightx = 0.20;

@@ -75,11 +75,10 @@ public class LoginForm extends JFrame {
 
         gotoRegisterButton.addActionListener(e -> {
             SwingUtilities.invokeLater(() -> {
-                // Giả sử bạn có một file RegisterForm.java
-                // RegisterForm registerForm = new RegisterForm();
-                // registerForm.setVisible(true);
-                dispose();
+                RegisterForm registerForm = new RegisterForm();
+                registerForm.setVisible(true);
             });
+                dispose();
         });
 
         // Create an instance of UserDao
@@ -94,9 +93,11 @@ public class LoginForm extends JFrame {
                 // Đăng nhập thành công
                 JOptionPane.showMessageDialog(this, "Login successful!");
 
+                // Lấy role từ database
+                String role = userDao.getUserRole(username);
                 // Chuyển sang cửa sổ chính và đóng cửa sổ login
                 SwingUtilities.invokeLater(() -> {
-                    MainApplication mainApp = new MainApplication(); // Tạo cửa sổ chính
+                    MainApplication mainApp = new MainApplication(username, role); // Tạo cửa sổ chính với tên và vai trò thực tế
                     mainApp.setVisible(true); // Hiển thị nó
                 });
 

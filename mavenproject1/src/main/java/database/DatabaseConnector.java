@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseConnector {
-    private static final String URL = "jdbc:mysql://localhost:3306/Finalyearproject?autoReconnect=true&useSSL=false";
+    private static final String URL = "jdbc:mysql://localhost:3306/shopdb?autoReconnect=true&useSSL=false";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "123456";
 

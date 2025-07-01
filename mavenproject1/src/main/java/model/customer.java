@@ -1,11 +1,11 @@
 package model;
 
-public class customer extends user {
+public class Customer extends User {
     private int phone;
     private String address;
     private float accumulatedPoint;
 
-    public customer(int userId, String userName, String password, String role, String email,
+    public Customer(int userId, String userName, String password, String role, String email,
                     int phone, String address, float accumulatedPoint) {
         super(userId, userName, password, role, email);
         this.phone = phone;

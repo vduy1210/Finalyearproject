@@ -91,7 +91,6 @@ public class RegisterForm extends JFrame {
         // --- Action Listeners ---
 
         gotoLoginButton.addActionListener(e -> {
-            // Chuyển về trang Login (code đã được đơn giản hóa)
             LoginForm loginForm = new LoginForm();
             loginForm.setVisible(true);
             dispose();

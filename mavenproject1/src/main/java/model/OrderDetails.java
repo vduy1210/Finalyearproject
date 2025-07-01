@@ -1,24 +1,31 @@
 package model;
 
-public class OrderDetails extends Order {
+public class OrderDetails {
+    private int id; // optional if needed
+    private int orderId;
     private int productId;
     private int quantity;
     private double unitPrice;
+    private String productName;
 
-    public OrderDetails() {
-        super();
-    }
+    public OrderDetails() {}
 
-    public OrderDetails(int orderId, int customerId, java.time.LocalDateTime orderDate,
-                        double totalAmount, double tax, double discount,
-                        int productId, int quantity, double unitPrice) {
-        super(orderId, customerId, orderDate, totalAmount, tax, discount);
+    public OrderDetails(int orderId, int productId, int quantity, double unitPrice) {
+        this.orderId = orderId;
         this.productId = productId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
     }
 
     // Getters and Setters
+
+    public int getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(int orderId) {
+        this.orderId = orderId;
+    }
 
     public int getProductId() {
         return productId;
@@ -44,10 +51,19 @@ public class OrderDetails extends Order {
         this.unitPrice = unitPrice;
     }
 
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
     @Override
     public String toString() {
-        return super.toString() + " | OrderDetails{" +
-                "productId=" + productId +
+        return "OrderDetails{" +
+                "orderId=" + orderId +
+                ", productId=" + productId +
                 ", quantity=" + quantity +
                 ", unitPrice=" + unitPrice +
                 '}';

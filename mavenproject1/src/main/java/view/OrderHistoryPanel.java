@@ -1,0 +1,382 @@
+package view;
+
+import dao.OrderDao;
+import model.Order;
+import model.OrderDetails;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.sql.*;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+public class OrderHistoryPanel extends JPanel {
+    // --- Constants and variables ---
+    private static final Color BACKGROUND_COLOR = new Color(44, 62, 80);
+    private static final Color MAIN_COLOR = new Color(52, 152, 219);
+    private static final Color SUCCESS_COLOR = new Color(39, 174, 96);
+    private static final Color DANGER_COLOR = new Color(231, 76, 60);
+    private static final Color WHITE = Color.WHITE;
+    private static final Color LIGHT_TEXT = new Color(236, 240, 241);
+
+    private static final Font FONT_BUTTON = new Font("Helvetica", Font.BOLD, 14);
+    private static final Font FONT_LABEL = new Font("Helvetica", Font.BOLD, 14);
+    private static final Font FONT_TITLE = new Font("Helvetica", Font.BOLD, 16);
+
+    private JTable orderTable;
+    private JTable orderDetailsTable;
+    private DefaultTableModel orderModel;
+    private DefaultTableModel orderDetailsModel;
+    private JTextField searchField;
+    private JComboBox<String> filterComboBox;
+    private NumberFormat currencyFormat;
+
+    public OrderHistoryPanel() {
+        setBackground(BACKGROUND_COLOR);
+        setLayout(new GridBagLayout());
+        setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        GridBagConstraints layout = new GridBagConstraints();
+        layout.insets = new Insets(5, 5, 5, 5);
+
+        // --- Search and Filter Panel ---
+        layout.gridx = 0; layout.gridy = 0;
+        layout.weightx = 1.0; layout.weighty = 0.05;
+        layout.fill = GridBagConstraints.HORIZONTAL;
+        add(createSearchFilterPanel(), layout);
+
+        // --- Orders Table ---
+        layout.gridy = 1;
+        layout.gridx = 0;
+        layout.weightx = 0.25; layout.weighty = 0.9;
+        layout.fill = GridBagConstraints.BOTH;
+        add(createOrderTablePanel(), layout);
+
+        // --- Order Details Panel ---
+        layout.gridx = 1; layout.gridy = 1;
+        layout.weightx = 0.75;
+        add(createOrderDetailsPanel(), layout);
+
+        // --- Action Buttons ---
+        layout.gridx = 0; layout.gridy = 2;
+        layout.gridwidth = 2;
+        layout.weightx = 1.0; layout.weighty = 0.05;
+        layout.fill = GridBagConstraints.HORIZONTAL;
+        add(createActionButtons(), layout);
+
+        loadOrders();
+    }
+
+    private JPanel createSearchFilterPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        panel.setOpaque(false);
+
+        JLabel searchLabel = createLabel("Search:");
+        searchField = new JTextField(20);
+        searchField.setFont(FONT_LABEL);
+
+        JLabel filterLabel = createLabel("Filter by:");
+        filterComboBox = new JComboBox<>(new String[]{"All Orders", "Today", "This Week", "This Month"});
+        filterComboBox.setFont(FONT_LABEL);
+
+        JButton searchButton = createButton("🔍 Search");
+        JButton refreshButton = createButton("🔄 Refresh");
+
+        searchButton.addActionListener(e -> performSearch());
+        refreshButton.addActionListener(e -> refreshData());
+
+        panel.add(searchLabel);
+        panel.add(searchField);
+        panel.add(filterLabel);
+        panel.add(filterComboBox);
+        panel.add(searchButton);
+        panel.add(refreshButton);
+
+        return panel;
+    }
+
+    private JScrollPane createOrderTablePanel() {
+        String[] columns = {"Order ID", "Customer", "Phone", "Date", "Total Amount", "Status"};
+        orderModel = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
+        };
+
+        orderTable = new JTable(orderModel);
+        orderTable.setFont(new Font("Helvetica", Font.PLAIN, 14));
+        orderTable.setRowHeight(28);
+        orderTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        orderTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                loadOrderDetails();
+            }
+        });
+
+        JScrollPane scroll = new JScrollPane(orderTable);
+        scroll.setBorder(createTitledBorder(" Order History "));
+        scroll.getViewport().setBackground(WHITE);
+        return scroll;
+    }
+
+    private JScrollPane createOrderDetailsPanel() {
+        String[] columns = {"Product", "Quantity", "Unit Price", "Subtotal"};
+        orderDetailsModel = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
+        };
+
+        orderDetailsTable = new JTable(orderDetailsModel);
+        orderDetailsTable.setFont(new Font("Helvetica", Font.PLAIN, 14));
+        orderDetailsTable.setRowHeight(28);
+
+        JScrollPane scroll = new JScrollPane(orderDetailsTable);
+        scroll.setBorder(createTitledBorder(" Order Details "));
+        scroll.getViewport().setBackground(WHITE);
+        return scroll;
+    }
+
+    private JPanel createActionButtons() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
+        panel.setOpaque(false);
+
+        JButton exportButton = createButton("📊 Export Report");
+        JButton printButton = createButton("🖨️ Print Order");
+        JButton deleteButton = createButton("🗑️ Delete Order");
+        JButton viewReceiptButton = createButton("📄 View Receipt");
+
+        exportButton.addActionListener(e -> exportReport());
+        printButton.addActionListener(e -> printOrder());
+        deleteButton.addActionListener(e -> deleteOrder());
+        viewReceiptButton.addActionListener(e -> viewReceipt());
+
+        panel.add(exportButton);
+        panel.add(printButton);
+        panel.add(deleteButton);
+        panel.add(viewReceiptButton);
+
+        return panel;
+    }
+
+    private void loadOrders() {
+        orderModel.setRowCount(0);
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            String sql = "SELECT o.order_id, c.name as customer_name, c.phone as customer_phone, o.order_date, o.total_amount, " +
+                        "CASE WHEN o.order_date >= CURRENT_DATE THEN 'Active' ELSE 'Completed' END as status " +
+                        "FROM orders o " +
+                        "JOIN customers c ON o.customer_id = c.id " +
+                        "ORDER BY o.order_date DESC";
+            
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Object[] row = {
+                    rs.getInt("order_id"),
+                    rs.getString("customer_name"),
+                    rs.getString("customer_phone"),
+                    rs.getTimestamp("order_date").toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                    currencyFormat.format(rs.getDouble("total_amount")),
+                    rs.getString("status")
+                };
+                orderModel.addRow(row);
+            }
+
+            rs.close();
+            ps.close();
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading orders: " + e.getMessage(), 
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void loadOrderDetails() {
+        orderDetailsModel.setRowCount(0);
+        int selectedRow = orderTable.getSelectedRow();
+        if (selectedRow == -1) return;
+
+        int orderId = (Integer) orderModel.getValueAt(selectedRow, 0);
+        
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            String sql = "SELECT p.name as product_name, od.quantity, od.price, (od.quantity * od.price) as subtotal " +
+                        "FROM order_details od " +
+                        "JOIN products p ON od.product_id = p.id " +
+                        "WHERE od.order_id = ?";
+            
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, orderId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Object[] row = {
+                    rs.getString("product_name"),
+                    rs.getInt("quantity"),
+                    currencyFormat.format(rs.getDouble("price")),
+                    currencyFormat.format(rs.getDouble("subtotal"))
+                };
+                orderDetailsModel.addRow(row);
+            }
+
+            rs.close();
+            ps.close();
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading order details: " + e.getMessage(), 
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void performSearch() {
+        String searchTerm = searchField.getText().trim();
+        String filter = (String) filterComboBox.getSelectedItem();
+
+        orderModel.setRowCount(0);
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT o.order_id, c.name as customer_name, c.phone as customer_phone, o.order_date, o.total_amount, ");
+            sql.append("CASE WHEN o.order_date >= CURRENT_DATE THEN 'Active' ELSE 'Completed' END as status ");
+            sql.append("FROM orders o JOIN customers c ON o.customer_id = c.id ");
+
+            List<Object> params = new ArrayList<>();
+            boolean hasSearch = !searchTerm.isEmpty();
+
+            if (hasSearch) {
+                sql.append("WHERE c.name LIKE ? OR c.phone LIKE ? OR o.order_id LIKE ? ");
+                params.add("%" + searchTerm + "%");
+                params.add("%" + searchTerm + "%");
+                params.add("%" + searchTerm + "%");
+            }
+
+            if ("Today".equals(filter)) {
+                sql.append(hasSearch ? "AND " : "WHERE ");
+                sql.append("DATE(o.order_date) = CURRENT_DATE ");
+            } else if ("This Week".equals(filter)) {
+                sql.append(hasSearch ? "AND " : "WHERE ");
+                sql.append("YEARWEEK(o.order_date) = YEARWEEK(CURRENT_DATE) ");
+            } else if ("This Month".equals(filter)) {
+                sql.append(hasSearch ? "AND " : "WHERE ");
+                sql.append("YEAR(o.order_date) = YEAR(CURRENT_DATE) AND MONTH(o.order_date) = MONTH(CURRENT_DATE) ");
+            }
+
+            sql.append("ORDER BY o.order_date DESC");
+
+            PreparedStatement ps = conn.prepareStatement(sql.toString());
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Object[] row = {
+                    rs.getInt("order_id"),
+                    rs.getString("customer_name"),
+                    rs.getString("customer_phone"),
+                    rs.getTimestamp("order_date").toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                    currencyFormat.format(rs.getDouble("total_amount")),
+                    rs.getString("status")
+                };
+                orderModel.addRow(row);
+            }
+
+            rs.close();
+            ps.close();
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error searching orders: " + e.getMessage(),
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void refreshData() {
+        loadOrders();
+        searchField.setText("");
+        filterComboBox.setSelectedIndex(0);
+    }
+
+    private void exportReport() {
+        JOptionPane.showMessageDialog(this, "Export functionality will be implemented here", 
+            "Export Report", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void printOrder() {
+        int selectedRow = orderTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an order to print", 
+                "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "Print functionality will be implemented here", 
+            "Print Order", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void deleteOrder() {
+        int selectedRow = orderTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an order to delete", 
+                "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int orderId = (Integer) orderModel.getValueAt(selectedRow, 0);
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Are you sure you want to delete order #" + orderId + "?", 
+            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+            
+        if (confirm == JOptionPane.YES_OPTION) {
+            // Implement delete functionality
+            JOptionPane.showMessageDialog(this, "Delete functionality will be implemented here", 
+                "Delete Order", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void viewReceipt() {
+        int selectedRow = orderTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an order to view receipt", 
+                "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "Receipt view functionality will be implemented here", 
+            "View Receipt", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private TitledBorder createTitledBorder(String title) {
+        TitledBorder border = BorderFactory.createTitledBorder(title);
+        border.setTitleFont(FONT_TITLE);
+        border.setTitleColor(LIGHT_TEXT);
+        return border;
+    }
+
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(FONT_LABEL);
+        label.setForeground(LIGHT_TEXT);
+        return label;
+    }
+
+    private JButton createButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(FONT_BUTTON);
+        button.setBackground(MAIN_COLOR);
+        button.setForeground(WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(new EmptyBorder(10, 20, 10, 20));
+        return button;
+    }
+} 

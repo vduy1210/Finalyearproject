@@ -23,10 +23,15 @@ public class MainApplication extends JFrame {
     private JPanel contentPanel;
     private List<JButton> menuButtons;
 
-    public MainApplication() {
+    private String staffName;
+    private String staffRole;
+
+    public MainApplication(String staffName, String staffRole) {
+        this.staffName = staffName;
+        this.staffRole = staffRole;
         // Cấu hình cửa sổ
         setTitle("Ứng dụng Quản lý");
-        setSize(1280, 720);
+        setSize(1450, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -42,6 +47,8 @@ public class MainApplication extends JFrame {
         contentPanel.add(new DashboardPanel(), "DASHBOARD");
         contentPanel.add(new ProductManagerPanel(), "PRODUCT_MANAGER");
         contentPanel.add(new OrderPanel(), "ORDER");
+        contentPanel.add(new OrderHistoryPanel(), "HISTORY");
+        contentPanel.add(new RevenueTodayPanel(), "REVENUE");
 
         // ======= THÊM CÁC PHẦN VÀO GIAO DIỆN CHÍNH =======
         add(createHeader(), BorderLayout.NORTH);
@@ -65,13 +72,31 @@ public class MainApplication extends JFrame {
         title.setForeground(TEXT_LIGHT);
         title.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JTextField staffInfo = new JTextField("Staff + Role");
+        JTextField staffInfo = new JTextField(staffName + " - " + staffRole);
         staffInfo.setEditable(false);
         staffInfo.setBackground(WHITE);
         staffInfo.setPreferredSize(new Dimension(200, 30));
 
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.setBackground(new Color(231, 76, 60));
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setFocusPainted(false);
+        logoutButton.setFont(MENU_HEADER_FONT);
+        logoutButton.setPreferredSize(new Dimension(120, 30));
+        logoutButton.addActionListener(e -> {
+            // Close main window and show login form
+            SwingUtilities.invokeLater(() -> {
+                new LoginForm().setVisible(true);
+            });
+            this.dispose();
+        });
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightPanel.setOpaque(false);
+        rightPanel.add(staffInfo);
+        rightPanel.add(logoutButton);
+
         header.add(title, BorderLayout.CENTER);
-        header.add(staffInfo, BorderLayout.EAST);
+        header.add(rightPanel, BorderLayout.EAST);
 
         return header;
     }
@@ -94,7 +119,7 @@ public class MainApplication extends JFrame {
         addMenuButton("Dashboard", "DASHBOARD", sidebar);
         addMenuButton("Product management", "PRODUCT_MANAGER", sidebar);
         addMenuButton("Order", "ORDER", sidebar);
-        addMenuButton("Order History", "HISTORY", sidebar);  // cần thêm panel sau
+        addMenuButton("Order History", "HISTORY", sidebar);
         addMenuButton("Revenue Today", "REVENUE", sidebar);  // cần thêm panel sau
 
         return sidebar;
@@ -138,8 +163,6 @@ public class MainApplication extends JFrame {
 
     // ======= CHẠY CHƯƠNG TRÌNH =======
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new MainApplication().setVisible(true);
-        });
+        // new MainApplication("Nguyen Van A", "Manager").setVisible(true);
     }
 }
