@@ -25,13 +25,16 @@ function Navbar({ setUserName }) {
     right: open ? 0 : "-70vw",
     width: "70vw",
     height: "100vh",
-    background: "#2980b9",
+    background: "#fff",
     boxShadow: open ? "-2px 0 12px rgba(44,62,80,0.18)" : "none",
     zIndex: 2000,
     transition: "right 0.3s cubic-bezier(.4,0,.2,1)",
     display: open && isMobile ? "flex" : "none",
     flexDirection: "column",
-    padding: "32px 20px 20px 20px"
+    padding: "32px 20px 20px 20px",
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
+    fontFamily: 'Roboto, Arial, sans-serif'
   };
   const overlayStyle = {
     position: "fixed",
@@ -44,21 +47,33 @@ function Navbar({ setUserName }) {
     display: open ? "block" : "none"
   };
   const linkStyle = {
-    color: "#fff",
+    color: "#1976d2",
     textDecoration: "none",
     fontWeight: 500,
     fontSize: 20,
-    margin: "18px 0"
+    margin: "18px 0",
+    borderRadius: 8,
+    padding: "8px 12px",
+    transition: "background 0.2s, color 0.2s",
+    fontFamily: 'Roboto, Arial, sans-serif'
+  };
+  const linkHover = {
+    background: "#e3f2fd",
+    color: "#64b5f6"
   };
   const buttonStyle = {
-    background: "#e74c3c",
+    background: "#1976d2",
     color: "#fff",
     border: "none",
-    borderRadius: 4,
+    borderRadius: 8,
     padding: "12px 24px",
     cursor: "pointer",
     fontSize: 20,
-    margin: "18px 0"
+    margin: "18px 0",
+    fontWeight: 600,
+    boxShadow: "0 2px 8px rgba(25,118,210,0.10)",
+    fontFamily: 'Roboto, Arial, sans-serif',
+    transition: "background 0.2s"
   };
   const hamburger = (
     <button
@@ -66,7 +81,7 @@ function Navbar({ setUserName }) {
       style={{
         background: "transparent",
         border: "none",
-        color: "#2980b9",
+        color: "#1976d2",
         fontSize: 32,
         position: "fixed",
         top: 14,
@@ -82,13 +97,17 @@ function Navbar({ setUserName }) {
 
   // Navbar ngang cho desktop/tablet
   const navStyle = {
-    background: "#3498db",
-    padding: "12px 0",
+    background: "#fff",
+    padding: "10px 0",
     marginBottom: 20,
     position: "sticky",
     top: 0,
     zIndex: 1000,
-    display: isMobile ? "none" : "block"
+    display: isMobile ? "none" : "flex",
+    alignItems: "center",
+    boxShadow: "0 2px 12px rgba(44,62,80,0.10)",
+    borderRadius: 0,
+    fontFamily: 'Roboto, Arial, sans-serif'
   };
   const ulStyle = {
     display: "flex",
@@ -98,23 +117,47 @@ function Navbar({ setUserName }) {
     alignItems: "center",
     margin: 0,
     padding: 0,
-    gap: 20
+    gap: 20,
+    flex: 1
   };
   const linkStyleDesktop = {
-    color: "#fff",
+    color: "#1976d2",
     textDecoration: "none",
     fontWeight: 500,
-    fontSize: 16
+    fontSize: 16,
+    borderRadius: 8,
+    padding: "8px 12px",
+    transition: "background 0.2s, color 0.2s",
+    fontFamily: 'Roboto, Arial, sans-serif'
   };
   const buttonStyleDesktop = {
-    background: "#e74c3c",
+    background: "#1976d2",
     color: "#fff",
     border: "none",
-    borderRadius: 4,
-    padding: "6px 14px",
+    borderRadius: 8,
+    padding: "8px 18px",
     cursor: "pointer",
-    fontSize: 16
+    fontSize: 16,
+    fontWeight: 600,
+    boxShadow: "0 2px 8px rgba(25,118,210,0.10)",
+    fontFamily: 'Roboto, Arial, sans-serif',
+    transition: "background 0.2s"
   };
+  // Logo/tên shop
+  const logoStyle = {
+    color: "#1976d2",
+    fontWeight: 700,
+    fontSize: 22,
+    marginLeft: 24,
+    marginRight: 32,
+    letterSpacing: 1,
+    fontFamily: 'Roboto, Arial, sans-serif',
+    textShadow: "0 2px 8px rgba(44,62,80,0.10)"
+  };
+
+  // Hover effect (simple, inline)
+  const [hoverIdx, setHoverIdx] = useState(-1);
+  const [hoverIdxMobile, setHoverIdxMobile] = useState(-1);
 
   return (
     <>
@@ -124,12 +167,13 @@ function Navbar({ setUserName }) {
       {open && <div style={overlayStyle} onClick={() => setOpen(false)} />}
       {/* Slide menu for mobile (chỉ hiện khi open) */}
       <nav style={drawerStyle}>
+        <span style={{ ...logoStyle, color: "#1976d2", marginLeft: 0, marginBottom: 18 }}>ShopName</span>
         <button
           onClick={() => setOpen(false)}
           style={{
             background: "transparent",
             border: "none",
-            color: "#fff",
+            color: "#1976d2",
             fontSize: 32,
             position: "absolute",
             top: 10,
@@ -139,29 +183,30 @@ function Navbar({ setUserName }) {
         >
           ×
         </button>
-        <Link to="/menu" style={linkStyle} onClick={() => setOpen(false)}>Menu</Link>
-        <Link to="/cart" style={linkStyle} onClick={() => setOpen(false)}>Cart</Link>
+        <Link to="/menu" style={{ ...linkStyle, ...(hoverIdxMobile === 0 ? linkHover : {}) }} onMouseEnter={() => setHoverIdxMobile(0)} onMouseLeave={() => setHoverIdxMobile(-1)} onClick={() => setOpen(false)}>Menu</Link>
+        <Link to="/cart" style={{ ...linkStyle, ...(hoverIdxMobile === 1 ? linkHover : {}) }} onMouseEnter={() => setHoverIdxMobile(1)} onMouseLeave={() => setHoverIdxMobile(-1)} onClick={() => setOpen(false)}>Cart</Link>
         {loggedIn && (role === "admin" || role === "staff") && (
-          <Link to="/product-manager" style={linkStyle} onClick={() => setOpen(false)}>Product Manager</Link>
+          <Link to="/product-manager" style={{ ...linkStyle, ...(hoverIdxMobile === 2 ? linkHover : {}) }} onMouseEnter={() => setHoverIdxMobile(2)} onMouseLeave={() => setHoverIdxMobile(-1)} onClick={() => setOpen(false)}>Product Manager</Link>
         )}
         {loggedIn ? (
           <button onClick={handleLogout} style={buttonStyle}>Logout</button>
         ) : (
-          <Link to="/login" style={linkStyle} onClick={() => setOpen(false)}>Login</Link>
+          <Link to="/login" style={{ ...linkStyle, ...(hoverIdxMobile === 3 ? linkHover : {}) }} onMouseEnter={() => setHoverIdxMobile(3)} onMouseLeave={() => setHoverIdxMobile(-1)} onClick={() => setOpen(false)}>Login</Link>
         )}
       </nav>
       {/* Navbar ngang cho desktop/tablet */}
       <nav style={navStyle}>
+        <span style={logoStyle}>ShopName</span>
         <ul style={ulStyle}>
           <li>
-            <Link to="/menu" style={linkStyleDesktop}>Menu</Link>
+            <Link to="/menu" style={{ ...linkStyleDesktop, ...(hoverIdx === 0 ? linkHover : {}) }} onMouseEnter={() => setHoverIdx(0)} onMouseLeave={() => setHoverIdx(-1)}>Menu</Link>
           </li>
           <li>
-            <Link to="/cart" style={linkStyleDesktop}>Cart</Link>
+            <Link to="/cart" style={{ ...linkStyleDesktop, ...(hoverIdx === 1 ? linkHover : {}) }} onMouseEnter={() => setHoverIdx(1)} onMouseLeave={() => setHoverIdx(-1)}>Cart</Link>
           </li>
           {loggedIn && (role === "admin" || role === "staff") && (
             <li>
-              <Link to="/product-manager" style={linkStyleDesktop}>Product Manager</Link>
+              <Link to="/product-manager" style={{ ...linkStyleDesktop, ...(hoverIdx === 2 ? linkHover : {}) }} onMouseEnter={() => setHoverIdx(2)} onMouseLeave={() => setHoverIdx(-1)}>Product Manager</Link>
             </li>
           )}
           <li style={{ marginLeft: 30 }}>
@@ -173,7 +218,7 @@ function Navbar({ setUserName }) {
                 Logout
               </button>
             ) : (
-              <Link to="/login" style={linkStyleDesktop}>
+              <Link to="/login" style={{ ...linkStyleDesktop, ...(hoverIdx === 3 ? linkHover : {}) }} onMouseEnter={() => setHoverIdx(3)} onMouseLeave={() => setHoverIdx(-1)}>
                 Login
               </Link>
             )}

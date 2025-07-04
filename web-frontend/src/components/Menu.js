@@ -10,90 +10,122 @@ function Menu({ addToCart }) {
       .then(data => setProducts(data));
   }, []);
 
-  // Responsive styles
+  // Responsive & modern styles
   const containerStyle = {
     maxWidth: 600,
     margin: "0 auto",
     padding: 16,
-    background: "#22313a",
-    borderRadius: 12,
-    boxShadow: "0 4px 24px rgba(44,62,80,0.12)",
-    width: "95vw"
+    background: "#f5f7fa",
+    borderRadius: 18,
+    boxShadow: "0 4px 24px rgba(44,62,80,0.08)",
+    width: "95vw",
+    fontFamily: 'Roboto, Arial, sans-serif'
   };
   const productListStyle = {
     display: "flex",
     flexDirection: "column",
-    gap: 20
+    gap: 24
   };
   const productCardStyle = {
     display: "flex",
     flexDirection: window.innerWidth < 600 ? "column" : "row",
     alignItems: window.innerWidth < 600 ? "flex-start" : "center",
-    background: "#2c3e50",
-    borderRadius: 10,
-    boxShadow: "0 2px 8px rgba(44,62,80,0.08)",
-    padding: 16,
+    background: "#fff",
+    borderRadius: 14,
+    boxShadow: "0 2px 12px rgba(44,62,80,0.08)",
+    padding: 18,
     gap: 20,
-    border: "1px solid #2980b9"
+    border: "1.5px solid #bbdefb",
+    transition: "transform 0.18s cubic-bezier(.4,0,.2,1), box-shadow 0.18s",
+    cursor: "pointer"
+  };
+  const productCardHover = {
+    transform: "scale(1.025)",
+    boxShadow: "0 6px 24px rgba(25,118,210,0.13)"
   };
   const imageStyle = {
     width: window.innerWidth < 600 ? 120 : 90,
     height: window.innerWidth < 600 ? 120 : 90,
     objectFit: "cover",
-    borderRadius: 8,
-    border: "2px solid #3498db",
+    borderRadius: 10,
+    border: "2px solid #bbdefb",
     background: "#fff",
     boxShadow: "0 2px 8px rgba(52,152,219,0.08)",
     display: "block",
     marginBottom: window.innerWidth < 600 ? 10 : 0
+  };
+  const placeholderStyle = {
+    ...imageStyle,
+    background: "#e3f2fd",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#90a4ae",
+    fontSize: 15,
+    fontStyle: "italic",
+    border: "2px dashed #bbdefb"
   };
   const infoStyle = {
     flex: 1,
     width: "100%"
   };
   const nameStyle = {
-    fontWeight: 600,
-    fontSize: window.innerWidth < 600 ? 20 : 18,
-    color: "#ecf0f1",
-    marginBottom: 6
+    fontWeight: 700,
+    fontSize: window.innerWidth < 600 ? 22 : 18,
+    color: "#1976d2",
+    marginBottom: 6,
+    fontFamily: 'Roboto, Arial, sans-serif'
   };
   const priceStyle = {
-    color: "#27ae60",
-    fontWeight: 500,
-    fontSize: window.innerWidth < 600 ? 18 : 16,
+    color: "#64b5f6",
+    fontWeight: 700,
+    fontSize: window.innerWidth < 600 ? 20 : 16,
     marginBottom: 4
   };
   const stockStyle = {
-    color: "#f1c40f",
+    color: "#888",
     fontSize: window.innerWidth < 600 ? 16 : 14
   };
   const buttonStyle = {
-    background: "#27ae60",
+    background: "#1976d2",
     color: "#fff",
     border: "none",
-    borderRadius: 4,
-    padding: window.innerWidth < 600 ? "12px 24px" : "8px 16px",
+    borderRadius: 8,
+    padding: window.innerWidth < 600 ? "14px 0" : "10px 24px",
     cursor: "pointer",
-    fontWeight: 600,
-    fontSize: window.innerWidth < 600 ? 18 : 16,
+    fontWeight: 700,
+    fontSize: window.innerWidth < 600 ? 20 : 16,
     marginTop: window.innerWidth < 600 ? 10 : 0,
-    width: window.innerWidth < 600 ? "100%" : undefined
+    width: window.innerWidth < 600 ? "100%" : 180,
+    boxShadow: "0 2px 8px rgba(25,118,210,0.10)",
+    transition: "background 0.18s"
   };
+  const buttonHover = {
+    background: "#64b5f6"
+  };
+
+  // Hover effect for card/button
+  const [hoverIdx, setHoverIdx] = useState(-1);
+  const [btnHoverIdx, setBtnHoverIdx] = useState(-1);
 
   return (
     <div style={containerStyle}>
       <h2 style={{
-        color: "#3498db",
+        color: "#1976d2",
         textAlign: "center",
-        marginBottom: 24,
+        marginBottom: 28,
         letterSpacing: 1,
-        fontSize: window.innerWidth < 600 ? 26 : 22
-      }}>Menu Sản Phẩm</h2>
+        fontSize: window.innerWidth < 600 ? 28 : 22,
+        fontWeight: 800,
+        fontFamily: 'Roboto, Arial, sans-serif'
+      }}>Product Menu</h2>
       <div style={productListStyle}>
-        {products.map(product => (
+        {products.map((product, idx) => (
           <div
             key={product.id}
-            style={productCardStyle}
+            style={{ ...productCardStyle, ...(hoverIdx === idx ? productCardHover : {}) }}
+            onMouseEnter={() => setHoverIdx(idx)}
+            onMouseLeave={() => setHoverIdx(-1)}
           >
             {/* Ảnh sản phẩm */}
             {product.imageUrl ? (
@@ -103,19 +135,7 @@ function Menu({ addToCart }) {
                 style={imageStyle}
               />
             ) : (
-              <div
-                style={{
-                  ...imageStyle,
-                  background: "#bdc3c7",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#7f8c8d",
-                  fontSize: 13,
-                  fontStyle: "italic",
-                  border: "2px dashed #95a5a6"
-                }}
-              >
+              <div style={placeholderStyle}>
                 No Image
               </div>
             )}
@@ -123,15 +143,17 @@ function Menu({ addToCart }) {
             {/* Thông tin sản phẩm */}
             <div style={infoStyle}>
               <div style={nameStyle}>{product.name}</div>
-              <div style={priceStyle}>Giá: {product.price.toLocaleString()}₫</div>
-              <div style={stockStyle}>Tồn kho: {product.stock}</div>
+              <div style={priceStyle}>Price: {product.price.toLocaleString()}₫</div>
+              <div style={stockStyle}>Stock: {product.stock}</div>
             </div>
             {/* Nút thêm vào giỏ hàng */}
             <button
               onClick={() => addToCart(product)}
-              style={buttonStyle}
+              style={{ ...buttonStyle, ...(btnHoverIdx === idx ? buttonHover : {}) }}
+              onMouseEnter={() => setBtnHoverIdx(idx)}
+              onMouseLeave={() => setBtnHoverIdx(-1)}
             >
-              Thêm vào giỏ
+              Add to Cart
             </button>
           </div>
         ))}
