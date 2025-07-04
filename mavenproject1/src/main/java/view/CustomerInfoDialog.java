@@ -16,14 +16,13 @@ public class CustomerInfoDialog extends JDialog {
     
     private JTextField nameField;
     private JTextField phoneField;
-    private JTextField addressField;
     private JTextField emailField;
     private boolean confirmed = false;
     
     public CustomerInfoDialog(JFrame parent, String phoneNumber) {
         super(parent, "New Customer Information", true);
         
-        setSize(400, 350);
+        setSize(400, 300);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         getContentPane().setBackground(BACKGROUND_COLOR);
@@ -31,7 +30,6 @@ public class CustomerInfoDialog extends JDialog {
         // Initialize fields
         nameField = new JTextField(20);
         phoneField = new JTextField(phoneNumber, 20);
-        addressField = new JTextField(20);
         emailField = new JTextField(20);
         
         // Phone field is read-only since it's passed from order
@@ -69,14 +67,8 @@ public class CustomerInfoDialog extends JDialog {
         gbc.gridx = 1; gbc.weightx = 0.7;
         mainPanel.add(phoneField, gbc);
         
-        // Address field
-        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0.3;
-        mainPanel.add(createLabel("Address:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.7;
-        mainPanel.add(addressField, gbc);
-        
         // Email field
-        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0.3;
+        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0.3;
         mainPanel.add(createLabel("Email:"), gbc);
         gbc.gridx = 1; gbc.weightx = 0.7;
         mainPanel.add(emailField, gbc);
@@ -149,10 +141,6 @@ public class CustomerInfoDialog extends JDialog {
     
     public String getCustomerPhone() {
         return phoneField.getText().trim();
-    }
-    
-    public String getCustomerAddress() {
-        return addressField.getText().trim();
     }
     
     public String getCustomerEmail() {

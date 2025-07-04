@@ -40,6 +40,8 @@ function Login({ setUserName }) {
       const data = await res.json();
       if (data.success) {
         localStorage.setItem("userName", data.userName);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
         setUserName(data.userName);
         navigate("/menu");
       } else {

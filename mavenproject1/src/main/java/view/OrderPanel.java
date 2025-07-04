@@ -490,15 +490,13 @@ public class OrderPanel extends JPanel {
                 return -1; // User cancelled
             }
             String customerName = dialog.getCustomerName();
-            String customerAddress = dialog.getCustomerAddress();
             String customerEmail = dialog.getCustomerEmail();
             // Insert new customer with 10 points
-            String insertSql = "INSERT INTO customers (name, phone, address, email, accumulatedPoint) VALUES (?, ?, ?, ?, 10)";
+            String insertSql = "INSERT INTO customers (name, phone, email, accumulatedPoint) VALUES (?, ?, ?, 10)";
             insertStmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
             insertStmt.setString(1, customerName);
             insertStmt.setString(2, customerPhone);
-            insertStmt.setString(3, customerAddress);
-            insertStmt.setString(4, customerEmail);
+            insertStmt.setString(3, customerEmail);
             int rowsAffected = insertStmt.executeUpdate();
             generatedKeys = insertStmt.getGeneratedKeys();
             int customerId = -1;

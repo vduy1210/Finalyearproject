@@ -31,7 +31,11 @@ public class UserController {
             return ResponseEntity.status(401).body("Invalid email or password");
         }
         return ResponseEntity.ok().body(
-            java.util.Map.of("success", true, "userName", user.getUserName())
+            java.util.Map.of(
+                "success", true,
+                "userName", user.getUserName(),
+                "role", user.getRole()
+            )
         );
     }
 }

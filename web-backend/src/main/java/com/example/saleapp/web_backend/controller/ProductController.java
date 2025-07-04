@@ -35,7 +35,7 @@ public class ProductController {
         }
         
         // 1. Set the upload directory (relative to your project root)
-        String uploadDir = "uploads/";
+        String uploadDir = "E:/Finalyearproject/web-backend/uploads/";
         try {
             // 2. Create the uploads directory if it doesn't exist
             Files.createDirectories(Paths.get(uploadDir));

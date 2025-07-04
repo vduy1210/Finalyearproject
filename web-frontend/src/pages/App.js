@@ -1,12 +1,13 @@
 // App.js
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Navbar from "./Navbar";
-import Login from "./Login";
-import Menu from "./Menu";
-import Cart from "./Cart";
-import Orders from "./Orders";
-import ProductManagerPanel from "./ProductManagerPanel";
+import Navbar from "../components/Navbar";
+import Login from "../components/Login";
+import Menu from "../components/Menu";
+import Cart from "../components/Cart";
+import Orders from "../components/Orders";
+import ProductManagerPanel from "../components/ProductManagerPanel";
+import AppRoutes from "../routes";
 
 
 function App() {
@@ -24,11 +25,14 @@ function App() {
   // Thêm sản phẩm vào cart
   const addToCart = (product) => {
     setCart(prev => {
-      // Nếu sản phẩm đã có trong cart, tăng số lượng
+      // Nếu sản phẩm đã có trong cart, tăng số lượng đúng cách
       const idx = prev.findIndex(item => item.id === product.id);
       if (idx !== -1) {
         const updated = [...prev];
-        updated[idx].quantity = (updated[idx].quantity || 1) + 1;
+        updated[idx] = {
+          ...updated[idx],
+          quantity: (updated[idx].quantity || 1) + 1
+        };
         return updated;
       }
       return [...prev, { ...product, quantity: 1 }];
@@ -46,14 +50,14 @@ function App() {
   return (
     <Router>
       <Navbar userName={userName} setUserName={setUserName} />
-      <Routes>
-        <Route path="/login" element={<Login setUserName={setUserName} />} />
-        <Route path="/menu" element={<Menu addToCart={addToCart} />} />
-        <Route path="/cart" element={<Cart cart={cart} onRemoveFromCart={removeFromCart} />} />
-        <Route path="/orders" element={<Orders cart={cart} clearCart={clearCart} userName={userName} />} />
-        <Route path="/product-manager" element={<ProductManagerPanel />} />
-        <Route path="/" element={<Navigate to="/menu" />} />
-      </Routes>
+      <AppRoutes 
+        setUserName={setUserName}
+        addToCart={addToCart}
+        cart={cart}
+        removeFromCart={removeFromCart}
+        clearCart={clearCart}
+        userName={userName}
+      />
     </Router>
   );
 }

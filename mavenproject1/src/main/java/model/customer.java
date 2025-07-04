@@ -1,15 +1,13 @@
 package model;
 
-public class Customer extends User {
+public class customer extends user {
     private int phone;
-    private String address;
     private float accumulatedPoint;
 
-    public Customer(int userId, String userName, String password, String role, String email,
-                    int phone, String address, float accumulatedPoint) {
+    public customer(int userId, String userName, String password, String role, String email,
+                    int phone, float accumulatedPoint) {
         super(userId, userName, password, role, email);
         this.phone = phone;
-        this.address = address;
         this.accumulatedPoint = accumulatedPoint;
     }
 
@@ -19,14 +17,6 @@ public class Customer extends User {
 
     public void setPhone(int phone) {
         this.phone = phone;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
     }
 
     public float getAccumulatedPoint() {
@@ -41,7 +31,6 @@ public class Customer extends User {
     public String toString() {
         return super.toString() + " | Customer{" +
                 "phone='" + phone + '\'' +
-                ", address='" + address + '\'' +
                 ", accumulatedPoint=" + accumulatedPoint +
                 '}';
     }
