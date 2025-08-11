@@ -1,5 +1,6 @@
 package com.example.saleapp.web_backend.controller;
 
+import com.example.saleapp.web_backend.dto.OrderRequest;
 import com.example.saleapp.web_backend.model.*;
 import com.example.saleapp.web_backend.repository.*;
 import org.springframework.web.bind.annotation.*;
@@ -18,35 +19,70 @@ public class OrderController {
     private UserRepository userRepository;
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @PostMapping
-    public ResponseEntity<?> placeOrder(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> placeOrder(@RequestBody OrderRequest orderRequest) {
         try {
-            Integer userId = (Integer) payload.get("userId");
-            List<Map<String, Object>> items = (List<Map<String, Object>>) payload.get("items");
-            double total = (double) payload.get("total");
-            Optional<User> userOpt = userRepository.findById(userId);
-            if (userOpt.isEmpty()) return ResponseEntity.badRequest().body("User not found");
-            User user = userOpt.get();
+            // 1) Find or create customer by phone (more unique identifier)
+            Customer customer = customerRepository.findByPhone(orderRequest.getPhone())
+                    .orElseGet(() -> {
+                        Customer c = new Customer();
+                        c.setName(orderRequest.getName());
+                        c.setPhone(orderRequest.getPhone());
+                        c.setEmail(orderRequest.getEmail());
+                        c.setAccumulatedPoint(0.0);
+                        return customerRepository.save(c);
+                    });
+
+            // 2) Update customer information if needed
+            if (!customer.getName().equals(orderRequest.getName()) || 
+                !customer.getEmail().equals(orderRequest.getEmail())) {
+                customer.setName(orderRequest.getName());
+                customer.setEmail(orderRequest.getEmail());
+                customerRepository.save(customer);
+            }
+
+            // 3) Get default staff user (assuming staff ID 1 exists)
+            User defaultStaff = userRepository.findById(1).orElse(null);
+            if (defaultStaff == null) {
+                return ResponseEntity.status(500).body("Default staff not found");
+            }
+
+            // 4) Build order
             Order order = new Order();
-            order.setUser(user);
+            order.setCustomer(customer);
+            order.setStaff(defaultStaff); // Set staff_id
+            order.setShippingName(orderRequest.getName());
+            order.setShippingPhone(orderRequest.getPhone());
+            order.setShippingEmail(orderRequest.getEmail());
+            order.setStatus("Pending");
             order.setOrderDate(LocalDateTime.now());
-            order.setTotal(total);
+            
+            // Add table number if available
+            if (orderRequest.getTableNumber() != null && !orderRequest.getTableNumber().trim().isEmpty()) {
+                order.setTableNumber(orderRequest.getTableNumber());
+            }
+
+            double total = 0.0;
             List<OrderItem> orderItems = new ArrayList<>();
-            for (Map<String, Object> item : items) {
-                Long productId = ((Number) item.get("productId")).longValue();
-                int quantity = ((Number) item.get("quantity")).intValue();
-                double price = ((Number) item.get("price")).doubleValue();
-                Optional<Product> productOpt = productRepository.findById(productId);
+            for (OrderRequest.OrderItemRequest item : orderRequest.getItems()) {
+                Optional<Product> productOpt = productRepository.findById(item.getProductId());
                 if (productOpt.isEmpty()) continue;
                 Product product = productOpt.get();
+
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);
                 orderItem.setProduct(product);
-                orderItem.setQuantity(quantity);
-                orderItem.setPrice(price);
+                orderItem.setQuantity(item.getQuantity());
+                orderItem.setPrice(item.getPrice());
+                total += item.getPrice() * item.getQuantity();
                 orderItems.add(orderItem);
             }
+
+            order.setTotal(total);
+            order.setTotalAmount(total); // Set total_amount field
             order.setItems(orderItems);
             orderRepository.save(order);
             return ResponseEntity.ok(Map.of("success", true, "orderId", order.getId()));
@@ -64,4 +100,4 @@ public class OrderController {
         List<Order> orders = orderRepository.findByUser(user);
         return ResponseEntity.ok(orders);
     }
-} 
+}

@@ -1,13 +1,28 @@
 // Cart.js
-import { Card, CardContent, Button, Typography, Grid, Paper, Box } from "@mui/material";
+import { Button, Typography, Paper, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import React from "react";
 
 function Cart({ cart, onRemoveFromCart, clearCart }) {
-  // Tính tổng tiền (theo VND)
+  // Calculate total (in VND)
   const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
   const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
-  // Style giống Menu
+  // State for modal
+  const [openDialog, setOpenDialog] = React.useState(false);
+  const [name, setName] = React.useState("");
+  const [phone, setPhone] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [tableNumber, setTableNumber] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  // Available tables list
+  const availableTables = [
+    "Table 1", "Table 2", "Table 3", "Table 4", "Table 5", 
+    "Table 6", "Table 7", "Table 8", "Table 9", "Table 10"
+  ];
+
+  // Style similar to Menu
   const productCardStyle = {
     display: "flex",
     flexDirection: window.innerWidth < 600 ? "column" : "row",
@@ -110,9 +125,70 @@ function Cart({ cart, onRemoveFromCart, clearCart }) {
   const [hoverIdx, setHoverIdx] = React.useState(-1);
   const [orderHover, setOrderHover] = React.useState(false);
 
-  function handleOrder() {
-    alert("Order placed successfully!");
-    if (clearCart) clearCart();
+  // Open dialog when clicking Place Order
+  const handleOpenDialog = () => {
+    if (cart.length === 0) {
+      alert("Cart is empty!");
+      return;
+    }
+    setOpenDialog(true);
+  };
+
+  // Close dialog
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setError("");
+    setName("");
+    setPhone("");
+    setEmail("");
+    setTableNumber("");
+  };
+
+  // Handle order submission
+  async function handleOrder() {
+    setError("");
+    if (!name || !phone || !email || !tableNumber) {
+      setError("Please fill in all information and select a table!");
+      return;
+    }
+    const emailRegex = /[^@\s]+@[^@\s]+\.[^@\s]+/;
+    if (!emailRegex.test(email)) {
+      setError("Invalid email format.");
+      return;
+    }
+
+    const payload = {
+      name,
+      phone,
+      email,
+      tableNumber,
+      items: cart.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity || 1,
+        price: item.price
+      }))
+    };
+
+    try {
+      setSubmitting(true);
+      const res = await fetch("http://localhost:8081/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Order failed");
+      }
+      const data = await res.json();
+      alert("Order successful! Order ID: " + (data.orderId ?? "") + "\nTable: " + tableNumber);
+      if (clearCart) clearCart();
+      handleCloseDialog();
+    } catch (e) {
+      setError(e.message || "Order failed. Please try again!");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   // Helper to get correct image url
@@ -124,8 +200,10 @@ function Cart({ cart, onRemoveFromCart, clearCart }) {
 
   return (
     <Box display="flex" justifyContent="center" alignItems="flex-start" minHeight="60vh" style={{ background: "#f5f7fa" }}>
-      <Paper elevation={3} sx={{ p: 4, width: window.innerWidth < 600 ? "98vw" : 500, maxWidth: 500, margin: window.innerWidth < 600 ? "8px auto" : undefined, borderRadius: 18, boxShadow: "0 4px 24px rgba(44,62,80,0.08)", fontFamily: 'Roboto, Arial, sans-serif', background: "#f5f7fa", display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Paper elevation={3} sx={{ p: 4, width: window.innerWidth < 600 ? "98vw" : 620, maxWidth: 680, margin: window.innerWidth < 600 ? "8px auto" : undefined, borderRadius: 18, boxShadow: "0 4px 24px rgba(44,62,80,0.08)", fontFamily: 'Roboto, Arial, sans-serif', background: "#f5f7fa", display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography variant="h4" gutterBottom fontSize={window.innerWidth < 600 ? 26 : 22} fontWeight={800} color="#1976d2" textAlign="center" mb={3} fontFamily="'Roboto, Arial, sans-serif'">Cart</Typography>
+        
+        {/* Product list */}
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
           {cart.map((item, idx) => (
             <div key={idx} style={{ ...productCardStyle, width: '100%', maxWidth: 400 }}>
@@ -150,21 +228,100 @@ function Cart({ cart, onRemoveFromCart, clearCart }) {
             </div>
           ))}
         </div>
-        <Typography variant="h6" sx={{ mt: 4 }} style={totalStyle}>Total Quantity: {totalItems}</Typography>
-        <Typography variant="h6" sx={{ mt: 1 }} style={totalStyle}>Total Price: {total.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}</Typography>
-        <Button
-          onClick={handleOrder}
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ mt: 3 }}
-          style={{ ...orderButtonStyle, ...(orderHover ? orderButtonHover : {}) }}
-          disabled={cart.length === 0}
-          onMouseEnter={() => setOrderHover(true)}
-          onMouseLeave={() => setOrderHover(false)}
-        >
-          Place Order
-        </Button>
+
+        {/* Total and order button */}
+        {cart.length > 0 && (
+          <div style={{ width: '100%', marginTop: 24, textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ mt: 1 }} style={totalStyle}>Total Items: {totalItems}</Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }} style={totalStyle}>Total Amount: {total.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}</Typography>
+            
+            <button
+              onClick={handleOpenDialog}
+              style={{ ...orderButtonStyle, ...(orderHover ? orderButtonHover : {}) }}
+              onMouseEnter={() => setOrderHover(true)}
+              onMouseLeave={() => setOrderHover(false)}
+            >
+              Place Order
+            </button>
+          </div>
+        )}
+
+        {/* Customer information dialog */}
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ color: "#1976d2", fontWeight: 700, textAlign: "center" }}>
+            Order Information
+          </DialogTitle>
+          <DialogContent>
+            {/* Table selection */}
+            <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+              <InputLabel id="table-select-label">Select Table</InputLabel>
+              <Select
+                labelId="table-select-label"
+                value={tableNumber}
+                label="Select Table"
+                onChange={(e) => setTableNumber(e.target.value)}
+              >
+                {availableTables.map((table) => (
+                  <MenuItem key={table} value={table}>{table}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Customer information */}
+            <TextField 
+              label="Full Name" 
+              value={name} 
+              onChange={(e)=>setName(e.target.value)} 
+              fullWidth 
+              size="small" 
+              margin="dense" 
+              sx={{ mb: 2 }}
+            />
+            <TextField 
+              label="Phone Number" 
+              value={phone} 
+              onChange={(e)=>setPhone(e.target.value)} 
+              fullWidth 
+              size="small" 
+              margin="dense" 
+              sx={{ mb: 2 }}
+            />
+            <TextField 
+              label="Email" 
+              value={email} 
+              onChange={(e)=>setEmail(e.target.value)} 
+              fullWidth 
+              size="small" 
+              margin="dense" 
+              sx={{ mb: 2 }}
+            />
+            {error && (
+              <Typography color="error" fontSize={14} mt={1}>{error}</Typography>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 3, justifyContent: "center" }}>
+            <Button 
+              onClick={handleCloseDialog} 
+              variant="outlined" 
+              color="primary"
+              sx={{ mr: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleOrder}
+              variant="contained"
+              color="primary"
+              disabled={submitting}
+              sx={{ 
+                background: "#1976d2",
+                "&:hover": { background: "#64b5f6" }
+              }}
+            >
+              {submitting ? "Processing..." : "Confirm"}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
     </Box>
   );

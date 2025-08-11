@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class OrderHistoryPanel extends JPanel {
+public class OrderConfirmationPanel extends JPanel {
     // --- Constants and variables ---
     private static final Color BACKGROUND_COLOR = new Color(44, 62, 80);
     private static final Color MAIN_COLOR = new Color(52, 152, 219);
@@ -38,7 +38,7 @@ public class OrderHistoryPanel extends JPanel {
     private JComboBox<String> filterComboBox;
     private NumberFormat currencyFormat;
 
-    public OrderHistoryPanel() {
+    public OrderConfirmationPanel() {
         setBackground(BACKGROUND_COLOR);
         setLayout(new GridBagLayout());
         setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -104,7 +104,7 @@ public class OrderHistoryPanel extends JPanel {
     }
 
     private JScrollPane createOrderTablePanel() {
-        String[] columns = {"Order ID", "Customer", "Phone", "Date", "Total Amount", "Status"};
+        String[] columns = {"Order ID", "Table", "Customer Name", "Phone", "Date", "Total", "Status"};
         orderModel = new DefaultTableModel(columns, 0) {
             public boolean isCellEditable(int row, int col) {
                 return false;
@@ -122,7 +122,7 @@ public class OrderHistoryPanel extends JPanel {
         });
 
         JScrollPane scroll = new JScrollPane(orderTable);
-        scroll.setBorder(createTitledBorder(" Order History "));
+        scroll.setBorder(createTitledBorder(" Order Confirmation "));
         scroll.getViewport().setBackground(WHITE);
         return scroll;
     }
@@ -149,16 +149,22 @@ public class OrderHistoryPanel extends JPanel {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
         panel.setOpaque(false);
 
+        JButton confirmButton = createButton("✅ Confirm (Processing)");
+        JButton cancelOrderButton = createButton("✖ Cancel Order");
         JButton exportButton = createButton("📊 Export Report");
         JButton printButton = createButton("🖨️ Print Order");
         JButton deleteButton = createButton("🗑️ Delete Order");
         JButton viewReceiptButton = createButton("📄 View Receipt");
 
+        confirmButton.addActionListener(e -> updateOrderStatus("Processing"));
+        cancelOrderButton.addActionListener(e -> updateOrderStatus("Cancelled"));
         exportButton.addActionListener(e -> exportReport());
         printButton.addActionListener(e -> printOrder());
         deleteButton.addActionListener(e -> deleteOrder());
         viewReceiptButton.addActionListener(e -> viewReceipt());
 
+        panel.add(confirmButton);
+        panel.add(cancelOrderButton);
         panel.add(exportButton);
         panel.add(printButton);
         panel.add(deleteButton);
@@ -171,11 +177,12 @@ public class OrderHistoryPanel extends JPanel {
         orderModel.setRowCount(0);
         try {
             Connection conn = database.DatabaseConnector.getConnection();
-            String sql = "SELECT o.order_id, c.name as customer_name, c.phone as customer_phone, o.order_date, o.total_amount, " +
-                        "CASE WHEN o.order_date >= CURRENT_DATE THEN 'Active' ELSE 'Completed' END as status " +
-                        "FROM orders o " +
-                        "JOIN customers c ON o.customer_id = c.id " +
-                        "ORDER BY o.order_date DESC";
+            String sql = "SELECT o.order_id, COALESCE(o.table_number, 'N/A') AS table_number, " +
+                         "COALESCE(o.shipping_name, c.name) AS customer_name, " +
+                         "COALESCE(o.shipping_phone, c.phone) AS phone, o.order_date, " +
+                         "COALESCE(o.total, o.total_amount) as total_display, o.status " +
+                         "FROM orders o LEFT JOIN customers c ON o.customer_id = c.id " +
+                         "ORDER BY o.order_date DESC";
             
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
@@ -183,10 +190,11 @@ public class OrderHistoryPanel extends JPanel {
             while (rs.next()) {
                 Object[] row = {
                     rs.getInt("order_id"),
+                    rs.getString("table_number"),
                     rs.getString("customer_name"),
-                    rs.getString("customer_phone"),
+                    rs.getString("phone"),
                     rs.getTimestamp("order_date").toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
-                    currencyFormat.format(rs.getDouble("total_amount")),
+                    currencyFormat.format(rs.getDouble("total_display")),
                     rs.getString("status")
                 };
                 orderModel.addRow(row);
@@ -211,13 +219,15 @@ public class OrderHistoryPanel extends JPanel {
         
         try {
             Connection conn = database.DatabaseConnector.getConnection();
-            String sql = "SELECT p.name as product_name, od.quantity, od.price, (od.quantity * od.price) as subtotal " +
-                        "FROM order_details od " +
-                        "JOIN products p ON od.product_id = p.id " +
-                        "WHERE od.order_id = ?";
-            
+            String sql = "SELECT p.name as product_name, oi.quantity, oi.price, (oi.quantity * oi.price) as subtotal FROM order_items oi " +
+                         "JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ? " +
+                         "UNION ALL " +
+                         "SELECT p.name as product_name, od.quantity, od.price, (od.quantity * od.price) as subtotal FROM order_details od " +
+                         "JOIN products p ON od.product_id = p.id WHERE od.order_id = ?";
+
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, orderId);
+            ps.setInt(2, orderId);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -248,15 +258,17 @@ public class OrderHistoryPanel extends JPanel {
         try {
             Connection conn = database.DatabaseConnector.getConnection();
             StringBuilder sql = new StringBuilder();
-            sql.append("SELECT o.order_id, c.name as customer_name, c.phone as customer_phone, o.order_date, o.total_amount, ");
-            sql.append("CASE WHEN o.order_date >= CURRENT_DATE THEN 'Active' ELSE 'Completed' END as status ");
-            sql.append("FROM orders o JOIN customers c ON o.customer_id = c.id ");
+            sql.append("SELECT o.order_id, COALESCE(o.table_number, 'N/A') AS table_number, ");
+            sql.append("COALESCE(o.shipping_name, c.name) AS customer_name, ");
+            sql.append("COALESCE(o.shipping_phone, c.phone) AS phone, o.order_date, COALESCE(o.total, o.total_amount) as total_display, ");
+            sql.append("o.status FROM orders o LEFT JOIN customers c ON o.customer_id = c.id ");
 
             List<Object> params = new ArrayList<>();
             boolean hasSearch = !searchTerm.isEmpty();
 
             if (hasSearch) {
-                sql.append("WHERE c.name LIKE ? OR c.phone LIKE ? OR o.order_id LIKE ? ");
+                sql.append("WHERE COALESCE(o.shipping_name, c.name) LIKE ? OR COALESCE(o.shipping_phone, c.phone) LIKE ? OR o.order_id LIKE ? OR o.table_number LIKE ? ");
+                params.add("%" + searchTerm + "%");
                 params.add("%" + searchTerm + "%");
                 params.add("%" + searchTerm + "%");
                 params.add("%" + searchTerm + "%");
@@ -284,10 +296,11 @@ public class OrderHistoryPanel extends JPanel {
             while (rs.next()) {
                 Object[] row = {
                     rs.getInt("order_id"),
+                    rs.getString("table_number"),
                     rs.getString("customer_name"),
-                    rs.getString("customer_phone"),
+                    rs.getString("phone"),
                     rs.getTimestamp("order_date").toLocalDateTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
-                    currencyFormat.format(rs.getDouble("total_amount")),
+                    currencyFormat.format(rs.getDouble("total_display")),
                     rs.getString("status")
                 };
                 orderModel.addRow(row);
@@ -307,6 +320,38 @@ public class OrderHistoryPanel extends JPanel {
         loadOrders();
         searchField.setText("");
         filterComboBox.setSelectedIndex(0);
+    }
+
+    private void updateOrderStatus(String newStatus) {
+        int selectedRow = orderTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an order first.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int orderId = (Integer) orderModel.getValueAt(selectedRow, 0);
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Update status of order #" + orderId + " to '" + newStatus + "'?",
+                "Confirm", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            String sql = "UPDATE orders SET status = ? WHERE order_id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, newStatus);
+            ps.setInt(2, orderId);
+            int affected = ps.executeUpdate();
+            ps.close();
+            conn.close();
+            if (affected > 0) {
+                JOptionPane.showMessageDialog(this, "Status updated.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                loadOrders();
+            } else {
+                JOptionPane.showMessageDialog(this, "Update failed.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void exportReport() {

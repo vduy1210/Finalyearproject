@@ -47,7 +47,7 @@ public class MainApplication extends JFrame {
         contentPanel.add(new DashboardPanel(), "DASHBOARD");
         contentPanel.add(new ProductManagerPanel(), "PRODUCT_MANAGER");
         contentPanel.add(new OrderPanel(), "ORDER");
-        contentPanel.add(new OrderHistoryPanel(), "HISTORY");
+        contentPanel.add(new OrderConfirmationPanel(), "HISTORY");
         contentPanel.add(new RevenueTodayPanel(), "REVENUE");
 
         // ======= THÊM CÁC PHẦN VÀO GIAO DIỆN CHÍNH =======
