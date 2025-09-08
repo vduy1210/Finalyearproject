@@ -5,7 +5,7 @@ import java.awt.*;
 import dao.UserDAO;
 
 
-import view.MainApplication;
+
 
 public class LoginForm extends JFrame {
 

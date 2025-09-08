@@ -6,6 +6,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class MainApplication extends JFrame {
 
     // ======= MÀU SẮC & FONT CHỮ =======
@@ -22,6 +23,7 @@ public class MainApplication extends JFrame {
     private CardLayout layoutSwitcher;
     private JPanel contentPanel;
     private List<JButton> menuButtons;
+    private OrderPanel orderPanel;
 
     private String staffName;
     private String staffRole;
@@ -46,7 +48,8 @@ public class MainApplication extends JFrame {
         // Thêm các màn hình nội dung
         contentPanel.add(new DashboardPanel(), "DASHBOARD");
         contentPanel.add(new ProductManagerPanel(), "PRODUCT_MANAGER");
-        contentPanel.add(new OrderPanel(), "ORDER");
+        orderPanel = new OrderPanel();
+        contentPanel.add(orderPanel, "ORDER");
         contentPanel.add(new OrderConfirmationPanel(), "HISTORY");
         contentPanel.add(new RevenueTodayPanel(), "REVENUE");
 
@@ -58,6 +61,16 @@ public class MainApplication extends JFrame {
         // Hiển thị màn hình mặc định
         layoutSwitcher.show(contentPanel, "DASHBOARD");
         highlightMenuButton("Dashboard");
+        
+
+    }
+
+    public void showOrderWithOrderId(int orderId) {
+        if (orderPanel != null) {
+            orderPanel.loadOrderIntoCart(orderId);
+        }
+        layoutSwitcher.show(contentPanel, "ORDER");
+        highlightMenuButton("Order");
     }
 
     // ======= TẠO PHẦN HEADER (TIÊU ĐỀ TRÊN CÙNG) =======
@@ -83,7 +96,7 @@ public class MainApplication extends JFrame {
         logoutButton.setFocusPainted(false);
         logoutButton.setFont(MENU_HEADER_FONT);
         logoutButton.setPreferredSize(new Dimension(120, 30));
-        logoutButton.addActionListener(e -> {
+        logoutButton.addActionListener(event -> {
             // Close main window and show login form
             SwingUtilities.invokeLater(() -> {
                 new LoginForm().setVisible(true);
@@ -119,7 +132,7 @@ public class MainApplication extends JFrame {
         addMenuButton("Dashboard", "DASHBOARD", sidebar);
         addMenuButton("Product management", "PRODUCT_MANAGER", sidebar);
         addMenuButton("Order", "ORDER", sidebar);
-        addMenuButton("Order History", "HISTORY", sidebar);
+        addMenuButton("Order Confirmation", "HISTORY", sidebar);
         addMenuButton("Revenue Today", "REVENUE", sidebar);  // cần thêm panel sau
 
         return sidebar;
@@ -138,7 +151,7 @@ public class MainApplication extends JFrame {
         menuButton.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Khi nhấn vào nút
-        menuButton.addActionListener(e -> {
+        menuButton.addActionListener(event -> {
             layoutSwitcher.show(contentPanel, panelName);  // chuyển sang màn hình tương ứng
             highlightMenuButton(label);
         });
@@ -165,4 +178,6 @@ public class MainApplication extends JFrame {
     public static void main(String[] args) {
         // new MainApplication("Nguyen Van A", "Manager").setVisible(true);
     }
+    
+
 }

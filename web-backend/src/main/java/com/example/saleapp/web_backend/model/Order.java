@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "web_order")
 @Cache(usage = CacheConcurrencyStrategy.NONE)
 public class Order {
     @Id

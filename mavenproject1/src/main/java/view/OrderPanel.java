@@ -1,13 +1,13 @@
 package view;
 
 import dao.GetProduct;
-import dao.OrderDao;
+import dao.AppOrderDao;
 import model.Product;
 import model.Order;
 import model.OrderDetails;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import view.CustomerInfoDialog;
+
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -54,7 +54,7 @@ public class OrderPanel extends JPanel {
         setLayout(new GridBagLayout());
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        currencyFormat = NumberFormat.getCurrencyInstance(Locale.of("vi", "VN"));
         GridBagConstraints layout = new GridBagConstraints();
         layout.insets = new Insets(5, 5, 5, 5);
 
@@ -80,6 +80,53 @@ public class OrderPanel extends JPanel {
 
         layout.gridy = 2;
         add(createActionButtons(), layout);
+    }
+
+    // Load an existing order's items into the cart by orderId
+    public void loadOrderIntoCart(int orderId) {
+        // Clear current cart
+        if (cartModel != null) {
+            cartModel.setRowCount(0);
+        }
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            String sql = "SELECT p.name AS product_name, od.quantity, od.price FROM web_order_details od " +
+                         "JOIN products p ON od.product_id = p.id WHERE od.order_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, orderId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        String productName = rs.getString("product_name");
+                        int quantity = rs.getInt("quantity");
+                        double price = rs.getDouble("price");
+                        double subtotal = quantity * price;
+                        cartModel.addRow(new Object[]{productName, quantity, subtotal});
+                    }
+                }
+            }
+
+            // Optionally load customer phone if present on order
+            String phoneSql = "SELECT COALESCE(shipping_phone, c.phone) AS phone FROM web_order o " +
+                              "LEFT JOIN customers c ON o.customer_id = c.id WHERE o.order_id = ?";
+            try (PreparedStatement ps2 = conn.prepareStatement(phoneSql)) {
+                ps2.setInt(1, orderId);
+                try (ResultSet rs2 = ps2.executeQuery()) {
+                    if (rs2.next()) {
+                        String phone = rs2.getString("phone");
+                        if (phone != null && customerPhoneField != null) {
+                            customerPhoneField.setText(phone);
+                        }
+                    }
+                }
+            }
+
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading order into cart: " + e.getMessage(), 
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+        updateTotal();
     }
 
     private JScrollPane createProductListPanelFromDatabase() {
@@ -393,8 +440,8 @@ public class OrderPanel extends JPanel {
                 }
 
                 // Save order to database
-                OrderDao orderDao = new OrderDao();
-                boolean success = orderDao.createOrder(order, orderDetails);
+                            AppOrderDao appOrderDao = new AppOrderDao();
+            boolean success = appOrderDao.createAppOrder(order, orderDetails);
 
                 if (success) {
                     JOptionPane.showMessageDialog(this, 

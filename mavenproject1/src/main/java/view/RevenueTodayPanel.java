@@ -56,7 +56,7 @@ public class RevenueTodayPanel extends JPanel {
         refreshButton.setBorder(new EmptyBorder(10, 20, 10, 20));
         refreshButton.addActionListener(e -> {
             loadTodayStatsAndChart();
-            loadTodayOrders();
+            loadTodayAppOrders();
         });
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
@@ -81,7 +81,7 @@ public class RevenueTodayPanel extends JPanel {
         chartPanel.setBorder(createTitledBorder("Units Sold by Product (Today)"));
         centerPanel.add(chartPanel);
 
-        // Table of today's orders
+        // Table of today's app orders (manual input)
         ordersModel = new DefaultTableModel(new String[]{"Order ID", "Customer", "Total", "Time"}, 0) {
             public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -89,15 +89,15 @@ public class RevenueTodayPanel extends JPanel {
         ordersTable.setFont(new Font("Helvetica", Font.PLAIN, 14));
         ordersTable.setRowHeight(28);
         JScrollPane tableScroll = new JScrollPane(ordersTable);
-        tableScroll.setBorder(createTitledBorder("Today's Orders"));
+        tableScroll.setBorder(createTitledBorder("Today's App Orders (Manual Input)"));
         tableScroll.getViewport().setBackground(WHITE);
         centerPanel.add(tableScroll);
 
         add(centerPanel, BorderLayout.CENTER);
 
-        // Load data
+        // Load data (only app orders - manual input)
         loadTodayStatsAndChart();
-        loadTodayOrders();
+        loadTodayAppOrders();
     }
 
     /**
@@ -141,9 +141,9 @@ public class RevenueTodayPanel extends JPanel {
     private void loadTodayStatsAndChart() {
         productSales.clear();
         try (Connection conn = database.DatabaseConnector.getConnection()) {
-            // Total revenue, total units, kinds
-            String sql = "SELECT COALESCE(SUM(od.quantity * od.price),0) as revenue, COALESCE(SUM(od.quantity),0) as total_units, COUNT(DISTINCT od.product_id) as kinds " +
-                    "FROM order_details od JOIN orders o ON od.order_id = o.order_id WHERE DATE(o.order_date) = CURRENT_DATE";
+            // Total revenue, total units, kinds (only app orders - manual input)
+            String sql = "SELECT COALESCE(SUM(ad.quantity * ad.price),0) as revenue, COALESCE(SUM(ad.quantity),0) as total_units, COUNT(DISTINCT ad.product_id) as kinds " +
+                    "FROM app_order_details ad JOIN app_order a ON ad.order_id = a.order_id WHERE DATE(a.order_date) = CURRENT_DATE";
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -154,11 +154,11 @@ public class RevenueTodayPanel extends JPanel {
             rs.close();
             ps.close();
 
-            // Product sales for chart
-            String chartSql = "SELECT p.name, SUM(od.quantity) as total_sold FROM order_details od " +
-                    "JOIN products p ON od.product_id = p.id " +
-                    "JOIN orders o ON od.order_id = o.order_id " +
-                    "WHERE DATE(o.order_date) = CURRENT_DATE GROUP BY p.name ORDER BY total_sold DESC";
+            // Product sales for chart (only app orders - manual input)
+            String chartSql = "SELECT p.name, SUM(ad.quantity) as total_sold FROM app_order_details ad " +
+                    "JOIN products p ON ad.product_id = p.id " +
+                    "JOIN app_order a ON ad.order_id = a.order_id " +
+                    "WHERE DATE(a.order_date) = CURRENT_DATE GROUP BY p.name ORDER BY total_sold DESC";
             ps = conn.prepareStatement(chartSql);
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -204,10 +204,10 @@ public class RevenueTodayPanel extends JPanel {
         }
     }
 
-    private void loadTodayOrders() {
+    private void loadTodayAppOrders() {
         ordersModel.setRowCount(0);
         try (Connection conn = database.DatabaseConnector.getConnection()) {
-            String sql = "SELECT o.order_id, c.name as customer_name, o.total_amount, o.order_date FROM orders o JOIN customers c ON o.customer_id = c.id WHERE DATE(o.order_date) = CURRENT_DATE ORDER BY o.order_date DESC";
+            String sql = "SELECT o.order_id, c.name as customer_name, o.total_amount, o.order_date FROM app_order o JOIN customers c ON o.customer_id = c.id WHERE DATE(o.order_date) = CURRENT_DATE ORDER BY o.order_date DESC";
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");

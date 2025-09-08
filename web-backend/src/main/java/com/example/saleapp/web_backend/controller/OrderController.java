@@ -84,7 +84,15 @@ public class OrderController {
             order.setTotal(total);
             order.setTotalAmount(total); // Set total_amount field
             order.setItems(orderItems);
-            orderRepository.save(order);
+            
+            // Save order first to get the order_id
+            Order savedOrder = orderRepository.save(order);
+            
+            // Save order items (web_order_details)
+            for (OrderItem item : orderItems) {
+                item.setOrder(savedOrder);
+            }
+            // The items will be saved automatically due to CascadeType.ALL
             return ResponseEntity.ok(Map.of("success", true, "orderId", order.getId()));
         } catch (Exception e) {
             e.printStackTrace();
