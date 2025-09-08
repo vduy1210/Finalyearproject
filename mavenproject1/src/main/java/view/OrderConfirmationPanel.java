@@ -202,6 +202,7 @@ public class OrderConfirmationPanel extends JPanel {
         JButton confirmButton = createButton("✅ Confirm (Processing)");
         JButton cancelOrderButton = createButton("✖ Cancel Order");
         JButton doneButton = createButton("✅ Done Status Order");
+        JButton printButton = createButton("🖨️ Print Order");
         JButton deleteButton = createButton("🗑️ Delete Order");
         JButton gotoOrderButton = createButton("➡️ Go To Order");
         JButton mergeButton = createButton("🔀 Merge Orders");
@@ -209,6 +210,7 @@ public class OrderConfirmationPanel extends JPanel {
         confirmButton.addActionListener(event -> updateOrderStatus("Processing"));
         cancelOrderButton.addActionListener(event -> updateOrderStatus("Cancelled"));
         doneButton.addActionListener(event -> updateOrderStatus("Completed"));
+        printButton.addActionListener(event -> printOrder());
         deleteButton.addActionListener(event -> deleteOrder());
         mergeButton.addActionListener(event -> mergeSelectedOrders());
         gotoOrderButton.addActionListener(event -> goToOrderWithCart());
@@ -216,6 +218,7 @@ public class OrderConfirmationPanel extends JPanel {
         panel.add(confirmButton);
         panel.add(cancelOrderButton);
         panel.add(doneButton);
+        panel.add(printButton);
         panel.add(deleteButton);
         panel.add(mergeButton);
         panel.add(gotoOrderButton);
@@ -455,7 +458,16 @@ public class OrderConfirmationPanel extends JPanel {
             "Export Report", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Removed printOrder button and handler as requested
+    private void printOrder() {
+        int selectedRow = orderTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an order to print", 
+                "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "Print functionality will be implemented here", 
+            "Print Order", JOptionPane.INFORMATION_MESSAGE);
+    }
 
     private void deleteOrder() {
         int selectedRow = orderTable.getSelectedRow();
