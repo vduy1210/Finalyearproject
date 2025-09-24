@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Image Loading</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { border: 1px solid #ccc; padding: 15px; margin: 10px 0; }
+        .success { color: green; }
+        .error { color: red; }
+        img { max-width: 200px; max-height: 200px; border: 1px solid #ddd; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Debug Image Loading</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        // Test 1: Check if backend is running
+        results.innerHTML += '<div class="test-section"><h3>Test 1: Backend Connection</h3></div>';
+        
+        fetch('http://localhost:8081/api/products')
+            .then(response => {
+                results.innerHTML += '<p class="success">✅ Backend is running (Status: ' + response.status + ')</p>';
+                return response.json();
+            })
+            .then(products => {
+                results.innerHTML += '<p class="success">✅ Found ' + products.length + ' products</p>';
+                
+                // Test 2: Check specific image URL
+                results.innerHTML += '<div class="test-section"><h3>Test 2: Specific Image URL Test</h3></div>';
+                
+                const testUrl = 'http://localhost:8081/uploads/product_11_1758688850661_vuong-quoc-anh.jpg';
+                results.innerHTML += '<p>Testing URL: <code>' + testUrl + '</code></p>';
+                
+                // Create image element to test loading
+                const img = document.createElement('img');
+                img.src = testUrl;
+                img.onload = function() {
+                    results.innerHTML += '<p class="success">✅ Image loaded successfully!</p>';
+                    results.appendChild(img);
+                };
+                img.onerror = function() {
+                    results.innerHTML += '<p class="error">❌ Image failed to load</p>';
+                };
+                
+                // Test 3: List all products and their image URLs
+                results.innerHTML += '<div class="test-section"><h3>Test 3: All Products Image URLs</h3></div>';
+                
+                products.forEach((product, index) => {
+                    results.innerHTML += '<p><strong>Product ' + (index + 1) + ':</strong> ' + product.name + '</p>';
+                    results.innerHTML += '<p>Image URL: <code>' + (product.imageUrl || 'No image URL') + '</code></p>';
+                    
+                    if (product.imageUrl) {
+                        const productImg = document.createElement('img');
+                        productImg.src = 'http://localhost:8081' + product.imageUrl;
+                        productImg.onload = function() {
+                            results.innerHTML += '<p class="success">✅ Image ' + (index + 1) + ' loaded</p>';
+                        };
+                        productImg.onerror = function() {
+                            results.innerHTML += '<p class="error">❌ Image ' + (index + 1) + ' failed to load</p>';
+                        };
+                        results.appendChild(productImg);
+                    }
+                    results.innerHTML += '<hr>';
+                });
+            })
+            .catch(error => {
+                results.innerHTML += '<p class="error">❌ Backend connection failed: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>

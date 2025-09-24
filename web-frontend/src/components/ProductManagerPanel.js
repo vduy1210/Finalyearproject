@@ -123,7 +123,7 @@ function ProductManagerPanel() {
           >
             {product.imageUrl ? (
               <img
-                src={`http://localhost:8081${product.imageUrl}`}
+                src={`http://localhost:8081${encodeURI(product.imageUrl)}`}
                 alt={product.name}
                 style={imageStyle}
               />

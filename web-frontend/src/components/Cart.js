@@ -2,7 +2,7 @@
 import { Button, Typography, Paper, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import React from "react";
 
-function Cart({ cart, onRemoveFromCart, clearCart }) {
+function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
   // Calculate total (in VND)
   const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
   const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
@@ -171,7 +171,10 @@ function Cart({ cart, onRemoveFromCart, clearCart }) {
 
     try {
       setSubmitting(true);
-      const res = await fetch("http://localhost:8081/api/orders", {
+      // Use dynamic hostname for mobile access
+      const hostname = window.location.hostname;
+      const apiUrl = `http://${hostname}:8081/api/orders`;
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -195,8 +198,31 @@ function Cart({ cart, onRemoveFromCart, clearCart }) {
   function getImageUrl(item) {
     if (!item.imageUrl) return null;
     if (item.imageUrl.startsWith('http')) return item.imageUrl;
-    return `http://localhost:8081${item.imageUrl}`;
+    
+    // Use dynamic hostname for mobile access
+    const hostname = window.location.hostname;
+    const backendPort = '8081'; // Always use backend port, not frontend port
+    
+    // Handle URL encoding issues
+    let cleanUrl = item.imageUrl;
+    // Note: Removed corrupted URL check as unicode characters are valid
+    
+    const imageUrl = `http://${hostname}:${backendPort}${encodeURI(cleanUrl)}`;
+    
+    // Debug logging
+    console.log('Image URL for', item.name, ':', imageUrl);
+    console.log('Original imageUrl from database:', item.imageUrl);
+    
+    // Return image URL with error handling
+    return imageUrl;
   }
+
+  // Function to update quantity
+  const updateQuantity = (idx, newQuantity) => {
+    if (updateCartQuantity) {
+      updateCartQuantity(idx, newQuantity);
+    }
+  };
 
   return (
     <Box display="flex" justifyContent="center" alignItems="flex-start" minHeight="60vh" style={{ background: "#f5f7fa" }}>
@@ -208,14 +234,85 @@ function Cart({ cart, onRemoveFromCart, clearCart }) {
           {cart.map((item, idx) => (
             <div key={idx} style={{ ...productCardStyle, width: '100%', maxWidth: 400 }}>
               {item.imageUrl ? (
-                <img src={getImageUrl(item)} alt={item.name} style={imageStyle} />
-              ) : (
-                <div style={placeholderStyle}>No Image</div>
-              )}
+                <img 
+                  src={getImageUrl(item)} 
+                  alt={item.name} 
+                  style={imageStyle}
+                  onError={(e) => {
+                    console.log('Image load error for', item.name, ':', e.target.src);
+                    console.log('Error details:', e);
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                  onLoad={(e) => {
+                    console.log('Image loaded successfully for', item.name);
+                    e.target.nextSibling.style.display = 'none';
+                  }}
+                />
+              ) : null}
+              <div style={{...placeholderStyle, display: item.imageUrl ? 'none' : 'flex'}}>
+                <div style={{textAlign: 'center', color: '#90a4ae', fontSize: '12px'}}>
+                  <div style={{fontSize: '24px', marginBottom: '4px'}}>📷</div>
+                  <div>No Image</div>
+                  {item.imageUrl && (
+                    <div style={{fontSize: '10px', marginTop: '4px', color: '#bbb'}}>
+                      URL: {item.imageUrl}
+                    </div>
+                  )}
+                </div>
+              </div>
               <div style={infoStyle}>
                 <div style={nameStyle}>{item.name}</div>
                 <div style={priceStyle}>Price: {item.price.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}</div>
-                <div style={qtyStyle}>Quantity: {item.quantity || 1}</div>
+                <div style={{display: 'flex', alignItems: 'center', gap: 8, marginTop: 8}}>
+                  <span style={qtyStyle}>Quantity:</span>
+                  <div style={{display: 'flex', alignItems: 'center', gap: 4}}>
+                    <button
+                      style={{
+                        background: '#f5f5f5',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        width: '28px',
+                        height: '28px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        fontWeight: 'bold'
+                      }}
+                      onClick={() => updateQuantity(idx, (item.quantity || 1) - 1)}
+                    >
+                      -
+                    </button>
+                    <span style={{
+                      minWidth: '30px',
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '16px'
+                    }}>
+                      {item.quantity || 1}
+                    </span>
+                    <button
+                      style={{
+                        background: '#f5f5f5',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        width: '28px',
+                        height: '28px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        fontWeight: 'bold'
+                      }}
+                      onClick={() => updateQuantity(idx, (item.quantity || 1) + 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
               </div>
               <button
                 style={{ ...buttonStyle, ...(hoverIdx === idx ? buttonHover : {}) }}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Product 11 Image</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { padding: 10px; margin: 10px 0; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        img { max-width: 200px; max-height: 200px; border: 1px solid #ddd; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Test Product 11 Image</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        // Test 1: Check product 11 details
+        fetch('http://localhost:8081/api/products/11/check-image')
+            .then(response => response.json())
+            .then(data => {
+                results.innerHTML += '<div class="result">';
+                results.innerHTML += '<h3>Product 11 Image Check:</h3>';
+                results.innerHTML += '<p><strong>Product ID:</strong> ' + data.productId + '</p>';
+                results.innerHTML += '<p><strong>Product Name:</strong> ' + data.productName + '</p>';
+                results.innerHTML += '<p><strong>Image URL:</strong> ' + data.imageUrl + '</p>';
+                results.innerHTML += '<p><strong>Filename:</strong> ' + data.filename + '</p>';
+                results.innerHTML += '<p><strong>File Path:</strong> ' + data.filePath + '</p>';
+                results.innerHTML += '<p><strong>File Exists:</strong> ' + data.fileExists + '</p>';
+                results.innerHTML += '<p><strong>Message:</strong> ' + data.message + '</p>';
+                results.innerHTML += '</div>';
+                
+                // Test 2: Try to load the image
+                if (data.imageUrl) {
+                    results.innerHTML += '<div class="result">';
+                    results.innerHTML += '<h3>Image Loading Test:</h3>';
+                    results.innerHTML += '<p>Testing URL: <code>http://localhost:8081' + data.imageUrl + '</code></p>';
+                    
+                    const img = document.createElement('img');
+                    img.src = 'http://localhost:8081' + data.imageUrl;
+                    img.onload = function() {
+                        results.innerHTML += '<p class="success">✅ Image loaded successfully!</p>';
+                        results.appendChild(img);
+                    };
+                    img.onerror = function() {
+                        results.innerHTML += '<p class="error">❌ Image failed to load</p>';
+                    };
+                    results.innerHTML += '</div>';
+                }
+            })
+            .catch(error => {
+                results.innerHTML += '<div class="result error">';
+                results.innerHTML += '<h3>Error:</h3>';
+                results.innerHTML += '<p>' + error.message + '</p>';
+                results.innerHTML += '</div>';
+            });
+    </script>
+</body>
+</html>

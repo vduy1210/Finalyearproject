@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Upload Directory</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { padding: 10px; margin: 10px 0; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Test Upload Directory</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        // Test 1: Check if backend is running
+        results.innerHTML += '<div class="result"><h3>Test 1: Backend Connection</h3></div>';
+        
+        fetch('http://localhost:8081/api/products')
+            .then(response => {
+                results.innerHTML += '<p class="success">✅ Backend is running (Status: ' + response.status + ')</p>';
+                return response.json();
+            })
+            .then(products => {
+                results.innerHTML += '<p class="success">✅ Found ' + products.length + ' products</p>';
+                
+                // Test 2: Check upload directory manually
+                results.innerHTML += '<div class="result"><h3>Test 2: Upload Directory Check</h3></div>';
+                
+                // Check if we can access the upload directory
+                const uploadUrl = 'http://localhost:8081/uploads/';
+                results.innerHTML += '<p>Testing upload directory access: <code>' + uploadUrl + '</code></p>';
+                
+                // Try to access a known file
+                const knownFile = 'product_3_1751617623234_download.jpg';
+                const testImageUrl = uploadUrl + knownFile;
+                
+                results.innerHTML += '<p>Testing known file: <code>' + testImageUrl + '</code></p>';
+                
+                const img = document.createElement('img');
+                img.src = testImageUrl;
+                img.onload = function() {
+                    results.innerHTML += '<p class="success">✅ Upload directory is accessible</p>';
+                    results.appendChild(img);
+                };
+                img.onerror = function() {
+                    results.innerHTML += '<p class="error">❌ Upload directory not accessible</p>';
+                };
+                
+                // Test 3: List all products and their image status
+                results.innerHTML += '<div class="result"><h3>Test 3: Product Image Status</h3></div>';
+                
+                products.forEach((product, index) => {
+                    results.innerHTML += '<p><strong>Product ' + (index + 1) + ':</strong> ' + product.name + '</p>';
+                    results.innerHTML += '<p>Image URL: <code>' + (product.imageUrl || 'No image URL') + '</code></p>';
+                    
+                    if (product.imageUrl) {
+                        const productImg = document.createElement('img');
+                        productImg.src = 'http://localhost:8081' + product.imageUrl;
+                        productImg.style.maxWidth = '100px';
+                        productImg.style.maxHeight = '100px';
+                        productImg.onload = function() {
+                            results.innerHTML += '<p class="success">✅ Image ' + (index + 1) + ' loaded</p>';
+                        };
+                        productImg.onerror = function() {
+                            results.innerHTML += '<p class="error">❌ Image ' + (index + 1) + ' failed to load</p>';
+                        };
+                        results.appendChild(productImg);
+                    }
+                    results.innerHTML += '<hr>';
+                });
+            })
+            .catch(error => {
+                results.innerHTML += '<p class="error">❌ Backend connection failed: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>

@@ -5,9 +5,24 @@ function Menu({ addToCart }) {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8081/api/products")
+    // Use IP address instead of localhost for mobile access
+    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? "http://localhost:8081/api/products"
+      : `http://${window.location.hostname}:8081/api/products`;
+    
+    fetch(apiUrl)
       .then(res => res.json())
-      .then(data => setProducts(data));
+      .then(data => setProducts(data))
+      .catch(error => {
+        console.error('Error fetching products:', error);
+        // Fallback to localhost if IP fails
+        if (apiUrl !== "http://localhost:8081/api/products") {
+          fetch("http://localhost:8081/api/products")
+            .then(res => res.json())
+            .then(data => setProducts(data))
+            .catch(err => console.error('Fallback also failed:', err));
+        }
+      });
   }, []);
 
   // Responsive & modern styles
@@ -130,15 +145,19 @@ function Menu({ addToCart }) {
             {/* Ảnh sản phẩm */}
             {product.imageUrl ? (
               <img
-                src={`http://localhost:8081${product.imageUrl}`}
+                src={`http://${window.location.hostname}:8081${encodeURI(product.imageUrl)}`}
                 alt={product.name}
                 style={imageStyle}
+                onError={(e) => {
+                  console.log('Image load error:', e.target.src);
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
               />
-            ) : (
-              <div style={placeholderStyle}>
-                No Image
-              </div>
-            )}
+            ) : null}
+            <div style={{...placeholderStyle, display: product.imageUrl ? 'none' : 'flex'}}>
+              No Image
+            </div>
 
             {/* Thông tin sản phẩm */}
             <div style={infoStyle}>

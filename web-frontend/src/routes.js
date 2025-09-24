@@ -6,7 +6,7 @@ import Cart from "./components/Cart";
 import ProductManagerPanel from "./components/ProductManagerPanel";
 import RequireAuth from "./components/RequireAuth";
 
-const AppRoutes = ({ setUserName, addToCart, cart, removeFromCart, clearCart, userName }) => (
+const AppRoutes = ({ setUserName, addToCart, cart, removeFromCart, clearCart, updateCartQuantity, userName }) => (
   <Routes>
     <Route path="/login" element={<Login setUserName={setUserName} />} />
     <Route
@@ -15,7 +15,7 @@ const AppRoutes = ({ setUserName, addToCart, cart, removeFromCart, clearCart, us
     />
     <Route
       path="/cart"
-      element={<Cart cart={cart} onRemoveFromCart={removeFromCart} clearCart={clearCart} />}
+      element={<Cart cart={cart} onRemoveFromCart={removeFromCart} clearCart={clearCart} updateCartQuantity={updateCartQuantity} />}
     />
     <Route
       path="/product-manager"

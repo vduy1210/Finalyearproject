@@ -47,6 +47,19 @@ function App() {
   // Xóa toàn bộ cart (sau khi đặt hàng thành công)
   const clearCart = () => setCart([]);
 
+  // Cập nhật số lượng sản phẩm trong cart
+  const updateCartQuantity = (idx, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(idx);
+      return;
+    }
+    setCart(prev => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], quantity: newQuantity };
+      return updated;
+    });
+  };
+
   return (
     <Router>
       <Navbar userName={userName} setUserName={setUserName} />
@@ -56,6 +69,7 @@ function App() {
         cart={cart}
         removeFromCart={removeFromCart}
         clearCart={clearCart}
+        updateCartQuantity={updateCartQuantity}
         userName={userName}
       />
     </Router>

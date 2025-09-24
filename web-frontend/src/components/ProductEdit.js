@@ -178,7 +178,7 @@ function ProductEdit({ product, onImageUploaded }) {
         {product.imageUrl && !localImageUrl && (
           <div>
             <div style={{ color: "#64b5f6", fontWeight: 500, marginBottom: 4 }}>Current Server Image</div>
-            <img src={`http://localhost:8081${product.imageUrl}`} alt={product.name} style={imageStyle} />
+            <img src={`http://localhost:8081${encodeURI(product.imageUrl)}`} alt={product.name} style={imageStyle} />
           </div>
         )}
         {/* Show message if no image */}
