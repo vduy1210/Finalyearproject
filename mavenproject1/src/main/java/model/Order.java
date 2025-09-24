@@ -10,6 +10,10 @@ public class Order {
     private double totalAmount;
     private double tax;
     private double discount;
+    private String shippingName;
+    private String shippingPhone;
+    private String shippingEmail;
+    private String tableNumber;
 
     public Order() {}
 
@@ -81,6 +85,38 @@ public class Order {
         this.discount = discount;
     }
 
+    public String getShippingName() {
+        return shippingName;
+    }
+
+    public void setShippingName(String shippingName) {
+        this.shippingName = shippingName;
+    }
+
+    public String getShippingPhone() {
+        return shippingPhone;
+    }
+
+    public void setShippingPhone(String shippingPhone) {
+        this.shippingPhone = shippingPhone;
+    }
+
+    public String getShippingEmail() {
+        return shippingEmail;
+    }
+
+    public void setShippingEmail(String shippingEmail) {
+        this.shippingEmail = shippingEmail;
+    }
+
+    public String getTableNumber() {
+        return tableNumber;
+    }
+
+    public void setTableNumber(String tableNumber) {
+        this.tableNumber = tableNumber;
+    }
+
     @Override
     public String toString() {
         return "Order{" +
@@ -91,6 +127,10 @@ public class Order {
                 ", totalAmount=" + totalAmount +
                 ", tax=" + tax +
                 ", discount=" + discount +
+                ", shippingName='" + shippingName + '\'' +
+                ", shippingPhone='" + shippingPhone + '\'' +
+                ", shippingEmail='" + shippingEmail + '\'' +
+                ", tableNumber='" + tableNumber + '\'' +
                 '}';
     }
 }

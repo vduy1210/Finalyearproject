@@ -1,18 +1,16 @@
 package view;
 
-import dao.OrderDao;
-import model.Order;
-import model.OrderDetails;
+import dao.WebOrderDao;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.JFileChooser;
 import java.awt.*;
 import java.sql.*;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +51,9 @@ public class OrderConfirmationPanel extends JPanel {
     private JLabel notificationLabel;
     private Timer notifyHideTimer;
     
+    // DAO instances
+    private WebOrderDao webOrderDao;
+    
 
 
     public OrderConfirmationPanel() {
@@ -61,6 +62,9 @@ public class OrderConfirmationPanel extends JPanel {
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
         currencyFormat = NumberFormat.getCurrencyInstance(Locale.of("vi", "VN"));
+        
+        // Initialize DAO
+        webOrderDao = new WebOrderDao();
         
         // Initialize auto-refresh and highlighting variables
         newOrderIds = new HashSet<>();
@@ -431,25 +435,14 @@ public class OrderConfirmationPanel extends JPanel {
                 "Update status of order #" + orderId + " to '" + newStatus + "'?",
                 "Confirm", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) return;
-        try {
-            Connection conn = database.DatabaseConnector.getConnection();
-            String sql = "UPDATE web_order SET status = ? WHERE order_id = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, newStatus);
-            ps.setInt(2, orderId);
-            int affected = ps.executeUpdate();
-            ps.close();
-            conn.close();
-            if (affected > 0) {
-                JOptionPane.showMessageDialog(this, "Status updated.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                loadOrders();
-                orderTable.repaint(); // Repaint to show updated colors
-            } else {
-                JOptionPane.showMessageDialog(this, "Update failed.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        
+        boolean success = webOrderDao.updateWebOrderStatus(orderId, newStatus);
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Status updated.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            loadOrders();
+            orderTable.repaint(); // Repaint to show updated colors
+        } else {
+            JOptionPane.showMessageDialog(this, "Update failed.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -465,8 +458,142 @@ public class OrderConfirmationPanel extends JPanel {
                 "No Selection", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        JOptionPane.showMessageDialog(this, "Print functionality will be implemented here", 
-            "Print Order", JOptionPane.INFORMATION_MESSAGE);
+        
+        int orderId = (Integer) orderModel.getValueAt(selectedRow, 0);
+        
+        try {
+            // Get order details from database
+            Connection conn = database.DatabaseConnector.getConnection();
+            
+            // Get order information
+            String orderSql = "SELECT o.*, c.name as customer_name, c.phone as customer_phone " +
+                           "FROM web_order o LEFT JOIN customers c ON o.customer_id = c.id " +
+                           "WHERE o.order_id = ?";
+            PreparedStatement orderPs = conn.prepareStatement(orderSql);
+            orderPs.setInt(1, orderId);
+            ResultSet orderRs = orderPs.executeQuery();
+            
+            if (!orderRs.next()) {
+                JOptionPane.showMessageDialog(this, "Order not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Get order details
+            String detailsSql = "SELECT p.name as product_name, od.quantity, od.price, (od.quantity * od.price) as subtotal " +
+                              "FROM web_order_details od JOIN products p ON od.product_id = p.id " +
+                              "WHERE od.order_id = ?";
+            PreparedStatement detailsPs = conn.prepareStatement(detailsSql);
+            detailsPs.setInt(1, orderId);
+            ResultSet detailsRs = detailsPs.executeQuery();
+            
+            // Create receipt content
+            StringBuilder receipt = new StringBuilder();
+            receipt.append("========================================\n");
+            receipt.append("           ORDER RECEIPT\n");
+            receipt.append("========================================\n");
+            receipt.append("Order ID: #").append(orderId).append("\n");
+            receipt.append("Date: ").append(orderRs.getTimestamp("order_date").toLocalDateTime()
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))).append("\n");
+            receipt.append("Customer: ").append(orderRs.getString("customer_name")).append("\n");
+            receipt.append("Phone: ").append(orderRs.getString("customer_phone")).append("\n");
+            receipt.append("Table: ").append(orderRs.getString("table_number")).append("\n");
+            receipt.append("Status: ").append(orderRs.getString("status")).append("\n");
+            receipt.append("----------------------------------------\n");
+            receipt.append("ITEMS:\n");
+            
+            double total = 0.0;
+            while (detailsRs.next()) {
+                String productName = detailsRs.getString("product_name");
+                int quantity = detailsRs.getInt("quantity");
+                double price = detailsRs.getDouble("price");
+                double subtotal = detailsRs.getDouble("subtotal");
+                total += subtotal;
+                
+                receipt.append(String.format("%-20s %3d x %8.0f = %10.0f\n", 
+                    productName.length() > 20 ? productName.substring(0, 17) + "..." : productName,
+                    quantity, price, subtotal));
+            }
+            
+            receipt.append("----------------------------------------\n");
+            receipt.append(String.format("Subtotal: %25.0f VND\n", total));
+            receipt.append(String.format("Discount: %25.0f VND\n", orderRs.getDouble("discount")));
+            receipt.append(String.format("Tax: %30.0f VND\n", orderRs.getDouble("tax")));
+            receipt.append("----------------------------------------\n");
+            receipt.append(String.format("TOTAL: %28.0f VND\n", orderRs.getDouble("total")));
+            receipt.append("========================================\n");
+            receipt.append("Thank you for your order!\n");
+            receipt.append("========================================\n");
+            
+            // Show receipt in a dialog
+            JTextArea receiptArea = new JTextArea(receipt.toString());
+            receiptArea.setFont(new Font("Courier New", Font.PLAIN, 12));
+            receiptArea.setEditable(false);
+            receiptArea.setBackground(Color.WHITE);
+            
+            JScrollPane scrollPane = new JScrollPane(receiptArea);
+            scrollPane.setPreferredSize(new Dimension(500, 400));
+            
+            // Create print button
+            JButton printButton = new JButton("🖨️ Print Receipt");
+            printButton.addActionListener(e -> {
+                try {
+                    receiptArea.print();
+                    JOptionPane.showMessageDialog(this, "Receipt sent to printer!", 
+                        "Print Success", JOptionPane.INFORMATION_MESSAGE);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Print error: " + ex.getMessage(), 
+                        "Print Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+            
+            // Create export button
+            JButton exportButton = new JButton("💾 Export as Text");
+            exportButton.addActionListener(e -> {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setSelectedFile(new java.io.File("receipt_" + orderId + ".txt"));
+                if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        java.io.File file = fileChooser.getSelectedFile();
+                        java.nio.file.Files.write(file.toPath(), receipt.toString().getBytes());
+                        JOptionPane.showMessageDialog(this, "Receipt exported to: " + file.getAbsolutePath(), 
+                            "Export Success", JOptionPane.INFORMATION_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Export error: " + ex.getMessage(), 
+                            "Export Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            
+            // Create button panel
+            JPanel buttonPanel = new JPanel(new FlowLayout());
+            buttonPanel.add(printButton);
+            buttonPanel.add(exportButton);
+            
+            // Create main panel
+            JPanel mainPanel = new JPanel(new BorderLayout());
+            mainPanel.add(scrollPane, BorderLayout.CENTER);
+            mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+            
+            // Show receipt dialog
+            JDialog receiptDialog = new JDialog((JFrame) SwingUtilities.getWindowAncestor(this), 
+                "Order Receipt #" + orderId, true);
+            receiptDialog.add(mainPanel);
+            receiptDialog.pack();
+            receiptDialog.setLocationRelativeTo(this);
+            receiptDialog.setVisible(true);
+            
+            // Close database connections
+            detailsRs.close();
+            detailsPs.close();
+            orderRs.close();
+            orderPs.close();
+            conn.close();
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage(), 
+                "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void deleteOrder() {

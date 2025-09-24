@@ -106,7 +106,7 @@ public class ProductManagerPanel extends JPanel {
         loadProductData();
     }
 
-    private void loadProductData() {
+    public void loadProductData() {
         tableModel.setRowCount(0);
         productIdList.clear();
 

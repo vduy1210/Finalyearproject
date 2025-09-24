@@ -9,6 +9,7 @@ import java.nio.file.*;
 import java.io.IOException;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -23,6 +24,35 @@ public class ProductController {
     @GetMapping
     public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productRepository.findById(id)
+                .map(product -> ResponseEntity.ok().body(product))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/stock")
+    public ResponseEntity<?> updateProductStock(@PathVariable Long id, @RequestParam int stock) {
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            return ResponseEntity.status(404).body("Product not found with ID: " + id);
+        }
+        
+        if (stock < 0) {
+            return ResponseEntity.badRequest().body("Stock cannot be negative");
+        }
+        
+        product.setStock(stock);
+        productRepository.save(product);
+        
+        return ResponseEntity.ok().body(Map.of(
+            "success", true,
+            "productId", id,
+            "newStock", stock,
+            "productName", product.getName()
+        ));
     }
 
     @PostMapping("/{id}/image")

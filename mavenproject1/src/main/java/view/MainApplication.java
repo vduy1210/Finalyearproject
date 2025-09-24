@@ -24,6 +24,9 @@ public class MainApplication extends JFrame {
     private JPanel contentPanel;
     private List<JButton> menuButtons;
     private OrderPanel orderPanel;
+    private ProductManagerPanel productManagerPanel;
+    private UserManagementPanel userManagementPanel;
+    private RevenueReportPanel revenueReportPanel;
 
     private String staffName;
     private String staffRole;
@@ -33,7 +36,7 @@ public class MainApplication extends JFrame {
         this.staffRole = staffRole;
         // Cấu hình cửa sổ
         setTitle("Ứng dụng Quản lý");
-        setSize(1450, 750);
+        setSize(1920, 1080);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -47,11 +50,23 @@ public class MainApplication extends JFrame {
 
         // Thêm các màn hình nội dung
         contentPanel.add(new DashboardPanel(), "DASHBOARD");
-        contentPanel.add(new ProductManagerPanel(), "PRODUCT_MANAGER");
+        productManagerPanel = new ProductManagerPanel();
+        contentPanel.add(productManagerPanel, "PRODUCT_MANAGER");
         orderPanel = new OrderPanel();
+        orderPanel.setOrderListener(() -> {
+            if (productManagerPanel != null) {
+                productManagerPanel.loadProductData();
+            }
+        });
         contentPanel.add(orderPanel, "ORDER");
         contentPanel.add(new OrderConfirmationPanel(), "HISTORY");
         contentPanel.add(new RevenueTodayPanel(), "REVENUE");
+
+        // Admin-only panels (added but only shown via menu for ADMIN)
+        userManagementPanel = new UserManagementPanel();
+        revenueReportPanel = new RevenueReportPanel();
+        contentPanel.add(userManagementPanel, "USER_MANAGEMENT");
+        contentPanel.add(revenueReportPanel, "REVENUE_REPORT");
 
         // ======= THÊM CÁC PHẦN VÀO GIAO DIỆN CHÍNH =======
         add(createHeader(), BorderLayout.NORTH);
@@ -133,7 +148,13 @@ public class MainApplication extends JFrame {
         addMenuButton("Product management", "PRODUCT_MANAGER", sidebar);
         addMenuButton("Order", "ORDER", sidebar);
         addMenuButton("Order Confirmation", "HISTORY", sidebar);
-        addMenuButton("Revenue Today", "REVENUE", sidebar);  // cần thêm panel sau
+        addMenuButton("Revenue Today", "REVENUE", sidebar);
+
+        // Admin-only menu items
+        if (staffRole != null && staffRole.equalsIgnoreCase("ADMIN")) {
+            addMenuButton("User Management", "USER_MANAGEMENT", sidebar);
+            addMenuButton("Revenue Report", "REVENUE_REPORT", sidebar);
+        }
 
         return sidebar;
     }

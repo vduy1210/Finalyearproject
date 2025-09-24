@@ -67,10 +67,34 @@ public class OrderController {
 
             double total = 0.0;
             List<OrderItem> orderItems = new ArrayList<>();
+            
+            // First pass: Validate stock availability
+            for (OrderRequest.OrderItemRequest item : orderRequest.getItems()) {
+                Optional<Product> productOpt = productRepository.findById(item.getProductId());
+                if (productOpt.isEmpty()) {
+                    return ResponseEntity.badRequest().body("Product not found with ID: " + item.getProductId());
+                }
+                Product product = productOpt.get();
+                
+                if (product.getStock() < item.getQuantity()) {
+                    return ResponseEntity.badRequest().body(
+                        "Insufficient stock for product: " + product.getName() + 
+                        ". Available: " + product.getStock() + 
+                        ", Requested: " + item.getQuantity()
+                    );
+                }
+            }
+            
+            // Second pass: Process order and update stock
             for (OrderRequest.OrderItemRequest item : orderRequest.getItems()) {
                 Optional<Product> productOpt = productRepository.findById(item.getProductId());
                 if (productOpt.isEmpty()) continue;
                 Product product = productOpt.get();
+
+                // Update stock: subtract ordered quantity
+                int newStock = product.getStock() - item.getQuantity();
+                product.setStock(newStock);
+                productRepository.save(product); // Save updated stock
 
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);

@@ -26,6 +26,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class OrderPanel extends JPanel {
+    public interface OrderListener {
+        void onOrderCreated();
+    }
+
+    private OrderListener orderListener;
     // --- Các hằng số và biến ---
     private static final Color BACKGROUND_COLOR = new Color(44, 62, 80);
     private static final Color MAIN_COLOR = new Color(52, 152, 219);
@@ -80,6 +85,10 @@ public class OrderPanel extends JPanel {
 
         layout.gridy = 2;
         add(createActionButtons(), layout);
+    }
+
+    public void setOrderListener(OrderListener listener) {
+        this.orderListener = listener;
     }
 
     // Load an existing order's items into the cart by orderId
@@ -453,6 +462,11 @@ public class OrderPanel extends JPanel {
                     customerPhoneField.setText("");
                     discountField.setText("0");
                     totalTextField.setText("0");
+
+                    // Notify listener so other panels can refresh
+                    if (orderListener != null) {
+                        orderListener.onOrderCreated();
+                    }
                 } else {
                     JOptionPane.showMessageDialog(this, "Failed to create order!", "Database Error", JOptionPane.ERROR_MESSAGE);
                 }
