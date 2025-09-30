@@ -1,11 +1,15 @@
 // Cart.js
 import { Button, Typography, Paper, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import React from "react";
+import { useNotification } from "./NotificationProvider";
 
 function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
   // Calculate total (in VND)
   const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
   const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
+  // Get notification functions
+  const notification = useNotification();
 
   // State for modal
   const [openDialog, setOpenDialog] = React.useState(false);
@@ -184,11 +188,45 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
         throw new Error(text || "Order failed");
       }
       const data = await res.json();
-      alert("Order successful! Order ID: " + (data.orderId ?? "") + "\nTable: " + tableNumber);
+      
+      // Show success notification with order details
+      notification.orderPlaced({
+        orderId: data.orderId,
+        tableNumber: tableNumber,
+        customerName: name,
+        totalAmount: total,
+        items: cart.map(item => ({
+          name: item.name,
+          quantity: item.quantity || 1,
+          price: item.price
+        }))
+      });
+
+      // Clear form and cart
       if (clearCart) clearCart();
       handleCloseDialog();
+      
+      // Show additional success message in console for debugging
+      console.log("Order placed successfully:", {
+        orderId: data.orderId,
+        tableNumber,
+        customer: name,
+        total
+      });
+      
     } catch (e) {
       setError(e.message || "Order failed. Please try again!");
+      
+      // Show error notification
+      notification.error(
+        "Order Failed",
+        e.message || "Something went wrong while placing your order. Please try again.",
+        {
+          tableNumber: tableNumber,
+          customerName: name,
+          totalAmount: total
+        }
+      );
     } finally {
       setSubmitting(false);
     }

@@ -7,6 +7,7 @@ import Menu from "../components/Menu";
 import Cart from "../components/Cart";
 import Orders from "../components/Orders";
 import ProductManagerPanel from "../components/ProductManagerPanel";
+import { NotificationProvider } from "../components/NotificationProvider";
 import AppRoutes from "../routes";
 
 
@@ -61,18 +62,20 @@ function App() {
   };
 
   return (
-    <Router>
-      <Navbar userName={userName} setUserName={setUserName} />
-      <AppRoutes 
-        setUserName={setUserName}
-        addToCart={addToCart}
-        cart={cart}
-        removeFromCart={removeFromCart}
-        clearCart={clearCart}
-        updateCartQuantity={updateCartQuantity}
-        userName={userName}
-      />
-    </Router>
+    <NotificationProvider>
+      <Router>
+        <Navbar userName={userName} setUserName={setUserName} />
+        <AppRoutes 
+          setUserName={setUserName}
+          addToCart={addToCart}
+          cart={cart}
+          removeFromCart={removeFromCart}
+          clearCart={clearCart}
+          updateCartQuantity={updateCartQuantity}
+          userName={userName}
+        />
+      </Router>
+    </NotificationProvider>
   );
 }
 

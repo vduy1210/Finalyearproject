@@ -4,6 +4,7 @@ import Login from "./components/Login";
 import Menu from "./components/Menu";
 import Cart from "./components/Cart";
 import ProductManagerPanel from "./components/ProductManagerPanel";
+import NotificationDemo from "./components/NotificationDemo";
 import RequireAuth from "./components/RequireAuth";
 
 const AppRoutes = ({ setUserName, addToCart, cart, removeFromCart, clearCart, updateCartQuantity, userName }) => (
@@ -16,6 +17,10 @@ const AppRoutes = ({ setUserName, addToCart, cart, removeFromCart, clearCart, up
     <Route
       path="/cart"
       element={<Cart cart={cart} onRemoveFromCart={removeFromCart} clearCart={clearCart} updateCartQuantity={updateCartQuantity} />}
+    />
+    <Route
+      path="/notifications"
+      element={<NotificationDemo />}
     />
     <Route
       path="/product-manager"

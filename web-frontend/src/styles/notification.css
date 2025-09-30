@@ -1,0 +1,260 @@
+/* notification.css - Additional styling for notification system */
+
+/* Global notification container styling */
+.notification-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 600px) {
+  .notification-container {
+    top: 8px;
+    right: 8px;
+    left: 8px;
+    max-width: none;
+  }
+}
+
+/* Custom notification animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Apply animations to notification alerts */
+.MuiAlert-root {
+  animation: slideInRight 0.3s ease-out;
+  margin-bottom: 8px !important;
+}
+
+.MuiAlert-root.notification-exit {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+/* Order status specific styling */
+.notification-order-status {
+  border-left: 4px solid #1976d2;
+}
+
+.notification-order-placed {
+  border-left: 4px solid #4caf50;
+}
+
+.notification-order-confirmed {
+  border-left: 4px solid #2196f3;
+}
+
+.notification-order-preparing {
+  border-left: 4px solid #ff9800;
+}
+
+.notification-order-ready {
+  border-left: 4px solid #8bc34a;
+  animation: pulse 1s ease-in-out 3;
+}
+
+.notification-order-served {
+  border-left: 4px solid #4caf50;
+}
+
+.notification-order-cancelled {
+  border-left: 4px solid #f44336;
+}
+
+/* Custom chip styling for order info */
+.notification-chip {
+  font-size: 0.75rem !important;
+  height: 20px !important;
+  margin: 2px !important;
+}
+
+/* Icon styling */
+.notification-icon {
+  font-size: 1.5rem !important;
+  margin-right: 8px;
+}
+
+/* Order details container styling */
+.notification-order-details {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  margin-top: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Typography enhancements */
+.notification-title {
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 4px !important;
+}
+
+.notification-message {
+  font-size: 0.9rem !important;
+  opacity: 0.9;
+  line-height: 1.4 !important;
+}
+
+.notification-detail {
+  font-size: 0.8rem !important;
+  opacity: 0.8;
+  margin: 2px 0 !important;
+}
+
+/* Progress bar for estimated time */
+.notification-progress {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1.5px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.notification-progress-bar {
+  height: 100%;
+  background: #4caf50;
+  border-radius: 1.5px;
+  animation: progressAnimation 2s ease-in-out;
+}
+
+@keyframes progressAnimation {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+/* High priority notification styling */
+.notification-high-priority {
+  box-shadow: 0 4px 20px rgba(244, 67, 54, 0.3) !important;
+  border: 2px solid #f44336 !important;
+}
+
+.notification-urgent {
+  animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+/* Sound indicator */
+.notification-sound-indicator {
+  position: absolute;
+  top: 8px;
+  right: 40px;
+  width: 8px;
+  height: 8px;
+  background: #4caf50;
+  border-radius: 50%;
+  animation: pulse 1s ease-in-out 3;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .notification-order-details {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+/* Hover effects */
+.MuiAlert-root:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Close button styling */
+.MuiAlert-action .MuiIconButton-root {
+  padding: 4px !important;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.MuiAlert-action .MuiIconButton-root:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Multiple notifications stacking */
+.notification-stack {
+  margin-bottom: 8px;
+}
+
+.notification-stack:nth-child(n+4) {
+  opacity: 0.8;
+  transform: scale(0.95);
+}
+
+.notification-stack:nth-child(n+6) {
+  display: none;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .MuiAlert-root,
+  .notification-progress-bar,
+  .notification-sound-indicator {
+    animation: none !important;
+  }
+}
+
+/* Focus styling for keyboard navigation */
+.MuiAlert-root:focus-within {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar for overflow content */
+.notification-order-details::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notification-order-details::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.notification-order-details::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.notification-order-details::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

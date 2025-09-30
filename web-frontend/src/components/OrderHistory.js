@@ -1,6 +1,7 @@
 // OrderHistory.js
 import { Paper, Typography, List, ListItem, Box, TextField, Button } from "@mui/material";
 import React from "react";
+import { useNotification } from "./NotificationProvider";
 
 function OrderHistory() {
   const [tableNumber, setTableNumber] = React.useState("");
@@ -9,17 +10,30 @@ function OrderHistory() {
     { id: 2, date: "2025-06-29", total: 150000, tableNumber: "Bàn 3" },
   ]);
 
+  // Get notification functions
+  const notification = useNotification();
+
   const handleTableChange = (event) => {
     setTableNumber(event.target.value);
   };
 
   const handleConfirmOrder = () => {
     if (!tableNumber.trim()) {
-      alert("Vui lòng nhập số bàn!");
+      notification.warning("Missing Information", "Vui lòng nhập số bàn!");
       return;
     }
-    // Xử lý xác nhận đơn hàng cho bàn cụ thể
-    alert(`Đã xác nhận đơn hàng cho ${tableNumber}`);
+    
+    // Simulate order confirmation process
+    const orderId = Date.now(); // Generate temporary order ID
+    notification.orderConfirmed({
+      orderId: orderId,
+      tableNumber: tableNumber,
+      customerName: "Customer", // You might want to get this from user input
+      totalAmount: 0 // You might want to calculate this based on table's order
+    });
+    
+    // Reset table number input
+    setTableNumber("");
   };
 
   return (
