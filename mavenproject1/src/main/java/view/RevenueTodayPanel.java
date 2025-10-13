@@ -2,8 +2,9 @@ package view;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.sql.*;
 import java.text.NumberFormat;
@@ -12,15 +13,27 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.data.category.DefaultCategoryDataset;
+
 public class RevenueTodayPanel extends JPanel {
-    private static final Color BACKGROUND_COLOR = new Color(44, 62, 80);
+    // Light theme
+    private static final Color BACKGROUND_COLOR = new Color(0xDD, 0xE3, 0xEA);
     private static final Color MAIN_COLOR = new Color(52, 152, 219);
     private static final Color SUCCESS_COLOR = new Color(39, 174, 96);
     private static final Color WHITE = Color.WHITE;
-    private static final Color LIGHT_TEXT = new Color(236, 240, 241);
-    private static final Font FONT_TITLE = new Font("Helvetica", Font.BOLD, 18);
-    private static final Font FONT_LABEL = new Font("Helvetica", Font.BOLD, 14);
-    private static final Font FONT_CARD = new Font("Helvetica", Font.BOLD, 16);
+    private static final Color COLOR_TEXT = new Color(33, 37, 41);
+    private static final Color COLOR_BORDER = new Color(230, 235, 241);
+    private static final Color TABLE_BG = new Color(0xE5, 0xE7, 0xEB);
+    private static final Color ROW_ALT = new Color(0xEF, 0xF1, 0xF5);
+
+    private static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 16);
+    private static final Font FONT_LABEL = new Font("Segoe UI", Font.BOLD, 14);
+    private static final Font FONT_CARD = new Font("Segoe UI", Font.BOLD, 18);
 
     private JLabel revenueLabel;
     private JLabel totalUnitsLabel;
@@ -28,122 +41,135 @@ public class RevenueTodayPanel extends JPanel {
     private DefaultTableModel ordersModel;
     private NumberFormat currencyFormat;
     private JPanel chartPanel;
-    private JPanel revenueCard;
-    private JPanel totalUnitsCard;
-    private JPanel kindsCard;
+    private JTable ordersTable;
+
+    // Store product sales for chart
+    private final Map<String, Integer> productSales = new LinkedHashMap<>();
 
     public RevenueTodayPanel() {
         setBackground(BACKGROUND_COLOR);
         setLayout(new BorderLayout(15, 15));
         setBorder(new EmptyBorder(20, 20, 20, 20));
-        currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        currencyFormat = NumberFormat.getCurrencyInstance(Locale.of("vi", "VN"));
 
-        // Top summary cards
+        // Top summary cards + refresh
         JPanel summaryPanel = new JPanel(new GridLayout(1, 3, 20, 0));
         summaryPanel.setOpaque(false);
-        revenueCard = createCard("Total Revenue Today", "0", SUCCESS_COLOR, true);
-        totalUnitsCard = createCard("Total Units Sold", "0", MAIN_COLOR, false);
-        kindsCard = createCard("Kinds of Products Sold", "0", WHITE, false);
-        summaryPanel.add(revenueCard);
-        summaryPanel.add(totalUnitsCard);
-        summaryPanel.add(kindsCard);
+        summaryPanel.add(createCard("Total Revenue Today", "0", SUCCESS_COLOR, true));
+        summaryPanel.add(createCard("Total Units Sold", "0", MAIN_COLOR, false));
+        summaryPanel.add(createCard("Kinds of Products Sold", "0", COLOR_TEXT, false));
 
-        JButton refreshButton = new JButton("🔄 Refresh");
-        refreshButton.setFont(FONT_LABEL);
-        refreshButton.setBackground(MAIN_COLOR);
-        refreshButton.setForeground(WHITE);
-        refreshButton.setFocusPainted(false);
-        refreshButton.setBorder(new EmptyBorder(10, 20, 10, 20));
-        refreshButton.addActionListener(e -> {
-            loadTodayStatsAndChart();
-            loadTodayAppOrders();
+        JButton refreshButton = createPrimaryButton("🔄 Refresh");
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadTodayStatsAndChart();
+                loadTodayAppOrders();
+            }
         });
+
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
         topPanel.add(summaryPanel, BorderLayout.CENTER);
         topPanel.add(refreshButton, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
-        // Center: Chart and Table split
+        // Center: chart + orders table
         JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0));
         centerPanel.setOpaque(false);
 
-        // Chart panel
-        chartPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                drawBarChart((Graphics2D) g);
-            }
-        };
-        chartPanel.setPreferredSize(new Dimension(400, 300));
+        // Chart wrapper with header
+        JLabel chartHeader = new JLabel("Units Sold by Product (Today)");
+        chartHeader.setFont(FONT_TITLE);
+        chartHeader.setForeground(COLOR_TEXT);
+        chartHeader.setBorder(new EmptyBorder(0, 0, 8, 0));
+        chartPanel = new JPanel(new BorderLayout());
         chartPanel.setBackground(WHITE);
-        chartPanel.setBorder(createTitledBorder("Units Sold by Product (Today)"));
-        centerPanel.add(chartPanel);
+        chartPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER), new EmptyBorder(8, 8, 8, 8)));
+        JPanel chartWrapper = new JPanel(new BorderLayout());
+        chartWrapper.setOpaque(false);
+        chartWrapper.add(chartHeader, BorderLayout.NORTH);
+        chartWrapper.add(chartPanel, BorderLayout.CENTER);
+        centerPanel.add(chartWrapper);
 
-        // Table of today's app orders (manual input)
+        // Orders table
         ordersModel = new DefaultTableModel(new String[]{"Order ID", "Customer", "Total", "Time"}, 0) {
             public boolean isCellEditable(int row, int col) { return false; }
         };
-        JTable ordersTable = new JTable(ordersModel);
-        ordersTable.setFont(new Font("Helvetica", Font.PLAIN, 14));
-        ordersTable.setRowHeight(28);
+        ordersTable = new JTable(ordersModel);
+        ordersTable.setFont(new Font("Segoe UI", Font.PLAIN, 17));
+        ordersTable.setRowHeight(44);
+        ordersTable.setShowGrid(false);
+        ordersTable.setIntercellSpacing(new Dimension(0, 0));
+        ordersTable.setSelectionBackground(new Color(232, 244, 253));
+        ordersTable.setSelectionForeground(COLOR_TEXT);
+        ordersTable.setBackground(TABLE_BG);
+
+        JTableHeader th = ordersTable.getTableHeader();
+        th.setFont(FONT_TITLE);
+        th.setBackground(WHITE);
+        th.setForeground(COLOR_TEXT);
+        th.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
+
+        DefaultTableCellRenderer alt = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) c.setBackground((row % 2 == 0) ? TABLE_BG : ROW_ALT);
+                return c;
+            }
+        };
+        for (int i = 0; i < ordersModel.getColumnCount(); i++) {
+            ordersTable.getColumnModel().getColumn(i).setCellRenderer(alt);
+        }
+
         JScrollPane tableScroll = new JScrollPane(ordersTable);
-        tableScroll.setBorder(createTitledBorder("Today's App Orders (Manual Input)"));
-        tableScroll.getViewport().setBackground(WHITE);
-        centerPanel.add(tableScroll);
+        tableScroll.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER), new EmptyBorder(8, 8, 8, 8)));
+        tableScroll.getViewport().setBackground(TABLE_BG);
+
+        JLabel tableHeader = new JLabel("Today's App Orders (Manual Input)");
+        tableHeader.setFont(FONT_TITLE);
+        tableHeader.setForeground(COLOR_TEXT);
+        tableHeader.setBorder(new EmptyBorder(0, 0, 8, 0));
+        JPanel tableWrapper = new JPanel(new BorderLayout());
+        tableWrapper.setOpaque(false);
+        tableWrapper.add(tableHeader, BorderLayout.NORTH);
+        tableWrapper.add(tableScroll, BorderLayout.CENTER);
+        centerPanel.add(tableWrapper);
 
         add(centerPanel, BorderLayout.CENTER);
 
-        // Load data (only app orders - manual input)
+        // Load data for default period (Today)
         loadTodayStatsAndChart();
         loadTodayAppOrders();
     }
 
-    /**
-     * Creates a card panel with a title and value. Also sets the value label to the appropriate field for updating.
-     */
-    private JPanel createCard(String title, String value, Color bgColor, boolean isRevenue) {
+    private JPanel createCard(String title, String value, Color valueColor, boolean isRevenue) {
         JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(bgColor);
+        card.setBackground(WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-                new EmptyBorder(15, 20, 15, 20)));
+                BorderFactory.createLineBorder(COLOR_BORDER), new EmptyBorder(16, 20, 16, 20)));
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(FONT_LABEL);
-        titleLabel.setForeground(bgColor == WHITE ? Color.BLACK : WHITE);
+        titleLabel.setForeground(COLOR_TEXT);
         JLabel valueLabel = new JLabel(value);
         valueLabel.setFont(FONT_CARD);
-        valueLabel.setForeground(bgColor == WHITE ? Color.BLACK : WHITE);
+        valueLabel.setForeground(valueColor);
         card.add(titleLabel, BorderLayout.NORTH);
         card.add(valueLabel, BorderLayout.CENTER);
-        // Set the correct field for updating
-        if (isRevenue) {
-            this.revenueLabel = valueLabel;
-        } else if (title.contains("Units")) {
-            this.totalUnitsLabel = valueLabel;
-        } else {
-            this.kindsLabel = valueLabel;
-        }
+        if (isRevenue) this.revenueLabel = valueLabel;
+        else if (title.contains("Units")) this.totalUnitsLabel = valueLabel;
+        else this.kindsLabel = valueLabel;
         return card;
     }
 
-    private TitledBorder createTitledBorder(String title) {
-        TitledBorder border = BorderFactory.createTitledBorder(title);
-        border.setTitleFont(FONT_TITLE);
-        border.setTitleColor(LIGHT_TEXT);
-        return border;
-    }
-
-    // Store product sales for chart
-    private Map<String, Integer> productSales = new LinkedHashMap<>();
-
-    private void loadTodayStatsAndChart() {
+    private void loadStatsAndChart(String period) {
         productSales.clear();
         try (Connection conn = database.DatabaseConnector.getConnection()) {
-            // Total revenue, total units, kinds (only app orders - manual input)
+            String where = buildWhereClauseForPeriod("a.order_date", period);
             String sql = "SELECT COALESCE(SUM(ad.quantity * ad.price),0) as revenue, COALESCE(SUM(ad.quantity),0) as total_units, COUNT(DISTINCT ad.product_id) as kinds " +
-                    "FROM app_order_details ad JOIN app_order a ON ad.order_id = a.order_id WHERE DATE(a.order_date) = CURRENT_DATE";
+                    "FROM app_order_details ad JOIN app_order a ON ad.order_id = a.order_id WHERE " + where;
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -154,11 +180,10 @@ public class RevenueTodayPanel extends JPanel {
             rs.close();
             ps.close();
 
-            // Product sales for chart (only app orders - manual input)
             String chartSql = "SELECT p.name, SUM(ad.quantity) as total_sold FROM app_order_details ad " +
                     "JOIN products p ON ad.product_id = p.id " +
                     "JOIN app_order a ON ad.order_id = a.order_id " +
-                    "WHERE DATE(a.order_date) = CURRENT_DATE GROUP BY p.name ORDER BY total_sold DESC";
+                    "WHERE " + where + " GROUP BY p.name ORDER BY total_sold DESC";
             ps = conn.prepareStatement(chartSql);
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -166,7 +191,7 @@ public class RevenueTodayPanel extends JPanel {
             }
             rs.close();
             ps.close();
-            chartPanel.repaint();
+            renderChart();
         } catch (SQLException e) {
             e.printStackTrace();
             revenueLabel.setText("Error");
@@ -175,39 +200,39 @@ public class RevenueTodayPanel extends JPanel {
         }
     }
 
-    private void drawBarChart(Graphics2D g) {
-        int width = chartPanel.getWidth();
-        int height = chartPanel.getHeight();
-        int padding = 40;
-        int barWidth = 40;
-        int maxBarHeight = height - 2 * padding - 30;
-        int x = padding;
-        int yBase = height - padding;
-        int max = 1;
-        for (int v : productSales.values()) max = Math.max(max, v);
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, width, height);
-        g.setColor(Color.BLACK);
-        g.drawLine(padding, yBase, width - padding, yBase);
-        int i = 0;
-        for (Map.Entry<String, Integer> entry : productSales.entrySet()) {
-            int barHeight = (int) ((entry.getValue() / (double) max) * maxBarHeight);
-            g.setColor(new Color(52, 152, 219));
-            g.fillRect(x, yBase - barHeight, barWidth, barHeight);
-            g.setColor(Color.BLACK);
-            g.drawRect(x, yBase - barHeight, barWidth, barHeight);
-            g.setFont(new Font("Helvetica", Font.PLAIN, 12));
-            g.drawString(entry.getKey(), x, yBase + 15);
-            g.drawString(String.valueOf(entry.getValue()), x + barWidth / 4, yBase - barHeight - 5);
-            x += barWidth + 20;
-            i++;
+    private void renderChart() {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        for (Map.Entry<String, Integer> e : productSales.entrySet()) {
+            dataset.addValue(e.getValue(), "Units", e.getKey());
         }
+        JFreeChart chart = ChartFactory.createBarChart(
+                null,
+                "Product",
+                "Units",
+                dataset);
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setOutlineVisible(false);
+        plot.setRangeGridlinePaint(new Color(220, 225, 231));
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, MAIN_COLOR);
+
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setPopupMenu(null);
+        cp.setMouseWheelEnabled(true);
+        cp.setBackground(WHITE);
+
+        chartPanel.removeAll();
+        chartPanel.add(cp, BorderLayout.CENTER);
+        chartPanel.revalidate();
+        chartPanel.repaint();
     }
 
-    private void loadTodayAppOrders() {
+    private void loadAppOrders(String period) {
         ordersModel.setRowCount(0);
         try (Connection conn = database.DatabaseConnector.getConnection()) {
-            String sql = "SELECT o.order_id, c.name as customer_name, o.total_amount, o.order_date FROM app_order o JOIN customers c ON o.customer_id = c.id WHERE DATE(o.order_date) = CURRENT_DATE ORDER BY o.order_date DESC";
+            String where = buildWhereClauseForPeriod("o.order_date", period);
+            String sql = "SELECT o.order_id, c.name as customer_name, o.total_amount, o.order_date FROM app_order o JOIN customers c ON o.customer_id = c.id WHERE " + where + " ORDER BY o.order_date DESC";
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
@@ -225,4 +250,39 @@ public class RevenueTodayPanel extends JPanel {
             e.printStackTrace();
         }
     }
-} 
+
+    private String buildWhereClauseForPeriod(String dateColumn, String period) {
+        if (period == null) period = "Today";
+        switch (period) {
+            case "This Week":
+                return "YEARWEEK(" + dateColumn + ") = YEARWEEK(CURRENT_DATE)";
+            case "This Month":
+                return "YEAR(" + dateColumn + ") = YEAR(CURRENT_DATE) AND MONTH(" + dateColumn + ") = MONTH(CURRENT_DATE)";
+            case "This Year":
+                return "YEAR(" + dateColumn + ") = YEAR(CURRENT_DATE)";
+            case "Today":
+            default:
+                return "DATE(" + dateColumn + ") = CURRENT_DATE";
+        }
+    }
+
+    // Convenience wrappers for Today-only operations (keeps API stable)
+    private void loadTodayStatsAndChart() {
+        loadStatsAndChart("Today");
+    }
+
+    private void loadTodayAppOrders() {
+        loadAppOrders("Today");
+    }
+
+    private JButton createPrimaryButton(String text) {
+        JButton b = new JButton(text);
+        b.setFont(FONT_LABEL);
+        b.setBackground(MAIN_COLOR);
+        b.setForeground(WHITE);
+        b.setFocusPainted(false);
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER), new EmptyBorder(10, 20, 10, 20)));
+        return b;
+    }
+}

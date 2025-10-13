@@ -24,6 +24,18 @@ public class OrderDao {
         return webOrderDao.getTotalRevenue(from, to);
     }
 
+    public long getOrderCount(LocalDateTime from, LocalDateTime to) {
+        return webOrderDao.getOrderCount(from, to);
+    }
+
+    public long getDistinctCustomerCount(LocalDateTime from, LocalDateTime to) {
+        return webOrderDao.getDistinctCustomerCount(from, to);
+    }
+
+    public long getProductsSold(LocalDateTime from, LocalDateTime to) {
+        return webOrderDao.getProductsSold(from, to);
+    }
+
     public List<Order> listOrders(LocalDateTime from, LocalDateTime to) {
         // Delegate to WebOrderDao for web orders
         return webOrderDao.listWebOrders(from, to);

@@ -125,4 +125,191 @@ public class AppOrderDao {
             }
         }
     }
+
+    // ===== Reporting utilities for app orders =====
+    public double getTotalRevenue(java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        String[][] variants = new String[][]{
+                {"total_amount", "order_date"},
+                {"total", "order_date"},
+                {"total_amount", "created_at"},
+                {"total", "created_at"}
+        };
+        for (String[] v : variants) {
+            String totalCol = v[0];
+            String dateCol = v[1];
+            String sql = "SELECT COALESCE(SUM(" + totalCol + "), 0) AS revenue FROM app_order WHERE " + dateCol + " BETWEEN ? AND ?";
+            try (Connection conn = DatabaseConnector.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getDouble("revenue");
+                }
+            } catch (SQLException e) {
+                System.err.println("[AppOrderDao] SQL error in getTotalRevenue variant (" + totalCol + "," + dateCol + "): " + e.getMessage());
+                e.printStackTrace();
+                // try next variant
+            }
+        }
+        return 0.0;
+    }
+
+    public long getOrderCount(java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        String[][] variants = new String[][]{
+                {"order_date"},
+                {"created_at"}
+        };
+        for (String[] v : variants) {
+            String dateCol = v[0];
+            String sql = "SELECT COUNT(*) AS cnt FROM app_order WHERE " + dateCol + " BETWEEN ? AND ?";
+            try (Connection conn = DatabaseConnector.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getLong("cnt");
+                }
+            } catch (SQLException e) {
+                System.err.println("[AppOrderDao] SQL error in getOrderCount variant (" + dateCol + "): " + e.getMessage());
+                e.printStackTrace();
+                // try next variant
+            }
+        }
+        return 0L;
+    }
+
+    public long getDistinctCustomerCount(java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        String[][] variants = new String[][]{
+                {"order_date"},
+                {"created_at"}
+        };
+        for (String[] v : variants) {
+            String dateCol = v[0];
+            String sql = "SELECT COUNT(DISTINCT customer_id) AS cnt FROM app_order WHERE " + dateCol + " BETWEEN ? AND ?";
+            try (Connection conn = DatabaseConnector.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getLong("cnt");
+                }
+            } catch (SQLException e) {
+                System.err.println("[AppOrderDao] SQL error in getDistinctCustomerCount variant (" + dateCol + "): " + e.getMessage());
+                e.printStackTrace();
+                // try next variant
+            }
+        }
+        return 0L;
+    }
+
+    public long getProductsSold(java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        String[][] variants = new String[][]{
+                {"order_date"},
+                {"created_at"}
+        };
+        for (String[] v : variants) {
+            String dateCol = v[0];
+            String sql = "SELECT COALESCE(SUM(d.quantity),0) AS qty FROM app_order_details d JOIN app_order o ON d.order_id = o.order_id WHERE o." + dateCol + " BETWEEN ? AND ?";
+            try (Connection conn = DatabaseConnector.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getLong("qty");
+                }
+            } catch (SQLException e) {
+                System.err.println("[AppOrderDao] SQL error in getProductsSold variant (" + dateCol + "): " + e.getMessage());
+                e.printStackTrace();
+                // try next variant
+            }
+        }
+        return 0L;
+    }
+
+    /**
+     * Get revenue aggregated by date (local date) for the given range.
+     * Returns a map with LocalDate -> revenue (Double).
+     */
+    public java.util.Map<java.time.LocalDate, Double> getRevenueByDay(java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        java.util.Map<java.time.LocalDate, Double> map = new java.util.LinkedHashMap<>();
+        String[] dateCols = new String[]{"order_date", "created_at"};
+        String[] totalCols = new String[]{"total_amount", "total"};
+        for (String dateCol : dateCols) {
+            for (String totalCol : totalCols) {
+                String sql = "SELECT DATE(" + dateCol + ") AS d, COALESCE(SUM(" + totalCol + "),0) AS revenue FROM app_order WHERE " + dateCol + " BETWEEN ? AND ? GROUP BY DATE(" + dateCol + ") ORDER BY DATE(" + dateCol + ")";
+                try (Connection conn = DatabaseConnector.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setTimestamp(1, Timestamp.valueOf(from));
+                    ps.setTimestamp(2, Timestamp.valueOf(to));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            java.sql.Date d = rs.getDate("d");
+                            if (d != null) {
+                                java.time.LocalDate ld = d.toLocalDate();
+                                double rev = rs.getDouble("revenue");
+                                map.put(ld, rev);
+                            }
+                        }
+                        return map;
+                    }
+                } catch (SQLException e) {
+                    System.err.println("[AppOrderDao] SQL error in getRevenueByDay variant (" + totalCol + "," + dateCol + "): " + e.getMessage());
+                    e.printStackTrace();
+                    // try next variant
+                }
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Get order count aggregated by date (LocalDate) for the given range.
+     */
+    public java.util.Map<java.time.LocalDate, Long> getOrderCountByDay(java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        java.util.Map<java.time.LocalDate, Long> map = new java.util.LinkedHashMap<>();
+        String[] dateCols = new String[]{"order_date", "created_at"};
+        for (String dateCol : dateCols) {
+            String sql = "SELECT DATE(" + dateCol + ") AS d, COUNT(*) AS cnt FROM app_order WHERE " + dateCol + " BETWEEN ? AND ? GROUP BY DATE(" + dateCol + ") ORDER BY DATE(" + dateCol + ")";
+            try (Connection conn = DatabaseConnector.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        java.sql.Date d = rs.getDate("d");
+                        if (d != null) map.put(d.toLocalDate(), rs.getLong("cnt"));
+                    }
+                    return map;
+                }
+            } catch (SQLException e) {
+                System.err.println("[AppOrderDao] SQL error in getOrderCountByDay variant (" + dateCol + "): " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Get distinct customer count aggregated by date (LocalDate) for the given range.
+     */
+    public java.util.Map<java.time.LocalDate, Long> getDistinctCustomerCountByDay(java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        java.util.Map<java.time.LocalDate, Long> map = new java.util.LinkedHashMap<>();
+        String[] dateCols = new String[]{"order_date", "created_at"};
+        for (String dateCol : dateCols) {
+            String sql = "SELECT DATE(" + dateCol + ") AS d, COUNT(DISTINCT customer_id) AS cnt FROM app_order WHERE " + dateCol + " BETWEEN ? AND ? GROUP BY DATE(" + dateCol + ") ORDER BY DATE(" + dateCol + ")";
+            try (Connection conn = DatabaseConnector.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        java.sql.Date d = rs.getDate("d");
+                        if (d != null) map.put(d.toLocalDate(), rs.getLong("cnt"));
+                    }
+                    return map;
+                }
+            } catch (SQLException e) {
+                System.err.println("[AppOrderDao] SQL error in getDistinctCustomerCountByDay variant (" + dateCol + "): " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        return map;
+    }
 }

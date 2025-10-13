@@ -181,7 +181,7 @@ function Navbar({ setUserName }) {
           }}
           aria-label="Đóng menu"
         >
-          ×
+          
         </button>
         <Link to="/menu" style={{ ...linkStyle, ...(hoverIdxMobile === 0 ? linkHover : {}) }} onMouseEnter={() => setHoverIdxMobile(0)} onMouseLeave={() => setHoverIdxMobile(-1)} onClick={() => setOpen(false)}>Menu</Link>
         <Link to="/cart" style={{ ...linkStyle, ...(hoverIdxMobile === 1 ? linkHover : {}) }} onMouseEnter={() => setHoverIdxMobile(1)} onMouseLeave={() => setHoverIdxMobile(-1)} onClick={() => setOpen(false)}>Cart</Link>

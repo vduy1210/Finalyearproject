@@ -3,21 +3,30 @@ package view;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+// mouse listeners not used now; icon+button wrapper used instead
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class MainApplication extends JFrame {
 
-    // ======= MÀU SẮC & FONT CHỮ =======
-    private static final Color BACKGROUND_COLOR = new Color(44, 62, 80);
-    private static final Color MAIN_COLOR = new Color(52, 152, 219);
-    private static final Color TEXT_LIGHT = new Color(236, 240, 241);
+    // ======= MODERN COLOR SCHEME & TYPOGRAPHY =======
+    private static final Color PRIMARY_COLOR = new Color(33, 150, 243);       // Blue
+    private static final Color SIDEBAR_COLOR = new Color(250, 251, 252);      // Very Light Gray
+    private static final Color HEADER_COLOR = new Color(255, 255, 255);       // White
+    private static final Color BACKGROUND_COLOR = new Color(248, 250, 252);   // Light Blue Gray
+    private static final Color TEXT_PRIMARY = new Color(33, 33, 33);          // Dark Gray
+    private static final Color TEXT_SECONDARY = new Color(117, 117, 117);     // Medium Gray
+    private static final Color DANGER_COLOR = new Color(244, 67, 54);         // Red
+    private static final Color BORDER_COLOR = new Color(224, 224, 224);       // Light Border
     private static final Color WHITE = Color.WHITE;
 
-    private static final Font TITLE_FONT = new Font("Helvetica", Font.BOLD, 20);
-    private static final Font MENU_HEADER_FONT = new Font("Helvetica", Font.BOLD, 16);
-    private static final Font MENU_ITEM_FONT = new Font("Helvetica", Font.PLAIN, 14);
+    // Modern typography using Segoe UI
+    private static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 20);
+    private static final Font MENU_HEADER_FONT = new Font("Segoe UI", Font.BOLD, 14);
+    private static final Font MENU_ITEM_FONT = new Font("Segoe UI", Font.PLAIN, 14);
 
     // ======= THÀNH PHẦN GIAO DIỆN =======
     private CardLayout layoutSwitcher;
@@ -34,19 +43,22 @@ public class MainApplication extends JFrame {
     public MainApplication(String staffName, String staffRole) {
         this.staffName = staffName;
         this.staffRole = staffRole;
-        // Cấu hình cửa sổ
-        setTitle("Ứng dụng Quản lý");
+        
+        // Modern window configuration
+        setTitle("Restaurant Management System");
         setSize(1920, 1080);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(0, 0));
+        getContentPane().setBackground(BACKGROUND_COLOR);
 
-        // Tạo danh sách các nút menu
+        // Initialize menu buttons list
         menuButtons = new ArrayList<>();
 
-        // ======= TẠO KHU VỰC HIỂN THỊ CHÍNH =======
+        // ======= CREATE MAIN CONTENT AREA =======
         layoutSwitcher = new CardLayout();
         contentPanel = new JPanel(layoutSwitcher);
+        contentPanel.setBackground(BACKGROUND_COLOR);
 
         // Thêm các màn hình nội dung
         contentPanel.add(new DashboardPanel(), "DASHBOARD");
@@ -74,8 +86,8 @@ public class MainApplication extends JFrame {
         add(contentPanel, BorderLayout.CENTER);
 
         // Hiển thị màn hình mặc định
-        layoutSwitcher.show(contentPanel, "DASHBOARD");
-        highlightMenuButton("Dashboard");
+    layoutSwitcher.show(contentPanel, "DASHBOARD");
+    highlightMenuButton("Dashboard");
         
 
     }
@@ -88,70 +100,146 @@ public class MainApplication extends JFrame {
         highlightMenuButton("Order");
     }
 
-    // ======= TẠO PHẦN HEADER (TIÊU ĐỀ TRÊN CÙNG) =======
+    // ======= CREATE MODERN HEADER =======
     private JPanel createHeader() {
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(MAIN_COLOR);
-        header.setPreferredSize(new Dimension(getWidth(), 60));
-        header.setBorder(new EmptyBorder(10, 20, 10, 20));
+        header.setBackground(HEADER_COLOR);
+        header.setPreferredSize(new Dimension(getWidth(), 70));
+        header.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
+            new EmptyBorder(15, 25, 15, 25)
+        ));
 
-        JLabel title = new JLabel("Dashboard - Staff Management");
+        // Left side - App title with icon
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        leftPanel.setBackground(HEADER_COLOR);
+        
+        JLabel appIcon = new JLabel("🏪");
+        appIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
+        
+        JLabel title = new JLabel("Restaurant Management");
         title.setFont(TITLE_FONT);
-        title.setForeground(TEXT_LIGHT);
-        title.setHorizontalAlignment(SwingConstants.CENTER);
+        title.setForeground(TEXT_PRIMARY);
+        title.setBorder(new EmptyBorder(0, 15, 0, 0));
+        
+        leftPanel.add(appIcon);
+        leftPanel.add(title);
 
-        JTextField staffInfo = new JTextField(staffName + " - " + staffRole);
-        staffInfo.setEditable(false);
-        staffInfo.setBackground(WHITE);
-        staffInfo.setPreferredSize(new Dimension(200, 30));
+        // Right side - Staff info and logout
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        rightPanel.setBackground(HEADER_COLOR);
+        
+        // Staff info card
+        JPanel staffCard = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        staffCard.setBackground(BACKGROUND_COLOR);
+        staffCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            new EmptyBorder(8, 15, 8, 15)
+        ));
+        
+        JLabel staffIcon = new JLabel("👤");
+        staffIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
+        
+        JLabel staffInfo = new JLabel(staffName + " (" + staffRole + ")");
+        staffInfo.setFont(MENU_ITEM_FONT);
+        staffInfo.setForeground(TEXT_PRIMARY);
+        
+        staffCard.add(staffIcon);
+        staffCard.add(staffInfo);
 
-        JButton logoutButton = new JButton("Logout");
-        logoutButton.setBackground(new Color(231, 76, 60));
-        logoutButton.setForeground(Color.WHITE);
+        // Modern logout button
+        JButton logoutButton = new JButton("🚪 Logout");
+        logoutButton.setFont(MENU_ITEM_FONT);
+        logoutButton.setBackground(DANGER_COLOR);
+        logoutButton.setForeground(WHITE);
         logoutButton.setFocusPainted(false);
-        logoutButton.setFont(MENU_HEADER_FONT);
-        logoutButton.setPreferredSize(new Dimension(120, 30));
-        logoutButton.addActionListener(event -> {
-            // Close main window and show login form
-            SwingUtilities.invokeLater(() -> {
-                new LoginForm().setVisible(true);
-            });
-            this.dispose();
+        logoutButton.setBorder(new EmptyBorder(10, 20, 10, 20));
+        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        new LoginForm().setVisible(true);
+                    }
+                });
+                MainApplication.this.dispose();
+            }
         });
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rightPanel.setOpaque(false);
-        rightPanel.add(staffInfo);
+        
+        rightPanel.add(staffCard);
         rightPanel.add(logoutButton);
 
-        header.add(title, BorderLayout.CENTER);
+        header.add(leftPanel, BorderLayout.WEST);
         header.add(rightPanel, BorderLayout.EAST);
 
         return header;
     }
 
-    // ======= TẠO MENU BÊN TRÁI =======
+    // ======= CREATE MODERN SIDEBAR MENU =======
     private JPanel createSidebarMenu() {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(BACKGROUND_COLOR);
-        sidebar.setPreferredSize(new Dimension(220, getHeight()));
-        sidebar.setBorder(new EmptyBorder(20, 15, 20, 15));
+        sidebar.setBackground(SIDEBAR_COLOR);
+        sidebar.setPreferredSize(new Dimension(280, getHeight()));
+        sidebar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER_COLOR),
+            new EmptyBorder(24, 20, 24, 20)
+        ));
 
-        JLabel menuTitle = new JLabel("MENU");
+        // Menu header with icon
+        JPanel menuHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        menuHeader.setBackground(SIDEBAR_COLOR);
+    menuHeader.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        
+        JLabel menuIcon = new JLabel("📋");
+    menuIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        
+        JLabel menuTitle = new JLabel("NAVIGATION");
         menuTitle.setFont(MENU_HEADER_FONT);
-        menuTitle.setForeground(WHITE);
-        menuTitle.setBorder(new EmptyBorder(0, 5, 20, 0));
-        sidebar.add(menuTitle);
+        menuTitle.setForeground(TEXT_SECONDARY);
+    // add left padding to align menu title with menu button content
+    menuTitle.setBorder(new EmptyBorder(0, 16, 0, 0));
+        
+        menuHeader.add(menuIcon);
+        menuHeader.add(menuTitle);
+        sidebar.add(menuHeader);
+    sidebar.add(Box.createRigidArea(new Dimension(0, 12)));
 
-        // Thêm các nút menu
-        addMenuButton("Dashboard", "DASHBOARD", sidebar);
-        addMenuButton("Product management", "PRODUCT_MANAGER", sidebar);
-        addMenuButton("Order", "ORDER", sidebar);
-        addMenuButton("Order Confirmation", "HISTORY", sidebar);
-        addMenuButton("Revenue Today", "REVENUE", sidebar);
+            // Add menu buttons
+            addMenuButton("Dashboard", "DASHBOARD", sidebar);
+            addMenuButton("Product Management", "PRODUCT_MANAGER", sidebar);
+            addMenuButton("Order", "ORDER", sidebar);
+            addMenuButton("Order Confirmation", "HISTORY", sidebar);
+            addMenuButton("Revenue Today", "REVENUE", sidebar);
+            
+
+        // Add flexible space between main and admin sections to push admin to bottom
+        sidebar.add(Box.createVerticalGlue());
 
         // Admin-only menu items
         if (staffRole != null && staffRole.equalsIgnoreCase("ADMIN")) {
+            sidebar.add(Box.createRigidArea(new Dimension(0, 12)));
+            
+            // Admin section header
+            JPanel adminHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            adminHeader.setBackground(SIDEBAR_COLOR);
+            adminHeader.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+            
+            JLabel adminIcon = new JLabel("⚙️");
+            adminIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+            
+            JLabel adminTitle = new JLabel("ADMIN");
+            adminTitle.setFont(MENU_HEADER_FONT);
+            adminTitle.setForeground(PRIMARY_COLOR);
+            adminTitle.setBorder(new EmptyBorder(0, 16, 0, 0));
+            
+            adminHeader.add(adminIcon);
+            adminHeader.add(adminTitle);
+            sidebar.add(adminHeader);
+            sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
+            
             addMenuButton("User Management", "USER_MANAGEMENT", sidebar);
             addMenuButton("Revenue Report", "REVENUE_REPORT", sidebar);
         }
@@ -159,38 +247,51 @@ public class MainApplication extends JFrame {
         return sidebar;
     }
 
-    // ======= TẠO VÀ THÊM NÚT MENU =======
+    // ======= CREATE AND ADD MODERN MENU BUTTON =======
     private void addMenuButton(String label, String panelName, JPanel sidebar) {
         JButton menuButton = new JButton(label);
         menuButton.setFont(MENU_ITEM_FONT);
         menuButton.setBackground(WHITE);
-        menuButton.setForeground(Color.BLACK);
+        menuButton.setForeground(TEXT_PRIMARY);
         menuButton.setFocusPainted(false);
         menuButton.setHorizontalAlignment(SwingConstants.LEFT);
-        menuButton.setBorder(new EmptyBorder(15, 20, 15, 20));
-        menuButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, menuButton.getPreferredSize().height));
+        menuButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(230, 230, 230), 1, true),
+            new EmptyBorder(12, 16, 12, 16)
+        ));
+        menuButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
         menuButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        // Khi nhấn vào nút
-        menuButton.addActionListener(event -> {
-            layoutSwitcher.show(contentPanel, panelName);  // chuyển sang màn hình tương ứng
-            highlightMenuButton(label);
+        menuButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        menuButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                layoutSwitcher.show(contentPanel, panelName);
+                highlightMenuButton(label);
+            }
         });
 
         menuButtons.add(menuButton);
         sidebar.add(menuButton);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));  // khoảng cách
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
     }
 
-    // ======= TÔ MÀU NÚT MENU ĐANG CHỌN =======
+    // ======= HIGHLIGHT ACTIVE MENU BUTTON =======
     private void highlightMenuButton(String activeLabel) {
         for (JButton button : menuButtons) {
             if (button.getText().equals(activeLabel)) {
-                button.setBackground(MAIN_COLOR);
+                button.setBackground(PRIMARY_COLOR);
                 button.setForeground(WHITE);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 4, 0, 0, PRIMARY_COLOR.darker()),
+                    new EmptyBorder(12, 12, 12, 12)
+                ));
             } else {
                 button.setBackground(WHITE);
-                button.setForeground(Color.BLACK);
+                button.setForeground(TEXT_PRIMARY);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(230, 230, 230), 1, true),
+                    new EmptyBorder(12, 16, 12, 16)
+                ));
             }
         }
     }

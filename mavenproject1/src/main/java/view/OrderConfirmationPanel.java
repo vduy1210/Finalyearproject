@@ -4,9 +4,9 @@ import dao.WebOrderDao;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.JFileChooser;
 import java.awt.*;
 import java.sql.*;
@@ -23,16 +23,20 @@ import javax.swing.Timer;
 
 public class OrderConfirmationPanel extends JPanel {
     // --- Constants and variables ---
-    private static final Color BACKGROUND_COLOR = new Color(44, 62, 80);
+    // Light theme to match redesigned panels
+    private static final Color BACKGROUND_COLOR = new Color(0xDD, 0xE3, 0xEA); // slightly darker gray backdrop
     private static final Color MAIN_COLOR = new Color(52, 152, 219);
     private static final Color SUCCESS_COLOR = new Color(39, 174, 96);
     private static final Color DANGER_COLOR = new Color(231, 76, 60);
     private static final Color WHITE = Color.WHITE;
-    private static final Color LIGHT_TEXT = new Color(236, 240, 241);
+    private static final Color COLOR_TEXT = new Color(33, 37, 41);
+    private static final Color COLOR_BORDER = new Color(230, 235, 241);
+    private static final Color TABLE_BG = new Color(0xE5, 0xE7, 0xEB);
+    private static final Color ROW_ALT = new Color(0xEF, 0xF1, 0xF5);
 
-    private static final Font FONT_BUTTON = new Font("Helvetica", Font.BOLD, 14);
-    private static final Font FONT_LABEL = new Font("Helvetica", Font.BOLD, 14);
-    private static final Font FONT_TITLE = new Font("Helvetica", Font.BOLD, 16);
+    private static final Font FONT_BUTTON = new Font("Segoe UI", Font.BOLD, 15);
+    private static final Font FONT_LABEL = new Font("Segoe UI", Font.BOLD, 14);
+    private static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 15);
 
     private JTable orderTable;
     private JTable orderDetailsTable;
@@ -45,7 +49,7 @@ public class OrderConfirmationPanel extends JPanel {
     // Auto-refresh and highlighting variables
     private Timer refreshTimer;
     private Set<Integer> newOrderIds;
-    private Set<Integer> previousOrderIds;
+    private Set<Integer> lastSeenOrderIds;
     
     // Notification for new orders
     private JLabel notificationLabel;
@@ -67,13 +71,18 @@ public class OrderConfirmationPanel extends JPanel {
         webOrderDao = new WebOrderDao();
         
         // Initialize auto-refresh and highlighting variables
-        newOrderIds = new HashSet<>();
-        previousOrderIds = new HashSet<>();
+    newOrderIds = new HashSet<>();
+    lastSeenOrderIds = new HashSet<>();
         
         // Initialize auto-refresh timer (5 seconds)
-        refreshTimer = new Timer(5000, event -> {
-            refreshData();
-            highlightNewOrders();
+        refreshTimer = new Timer(5000, new java.awt.event.ActionListener() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) {
+                // Do not interrupt user while searching/filtering
+                if (!isFilterActive()) {
+                    refreshAccordingToState();
+                    highlightNewOrders();
+                }
+            }
         });
         refreshTimer.start();
         
@@ -128,8 +137,12 @@ public class OrderConfirmationPanel extends JPanel {
         JButton searchButton = createButton("🔍 Search");
         JButton refreshButton = createButton("🔄 Refresh");
 
-        searchButton.addActionListener(event -> performSearch());
-        refreshButton.addActionListener(event -> refreshData());
+        searchButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) { performSearch(); }
+        });
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) { refreshAccordingToState(); }
+        });
 
         left.add(searchLabel);
         left.add(searchField);
@@ -138,9 +151,9 @@ public class OrderConfirmationPanel extends JPanel {
         left.add(searchButton);
         left.add(refreshButton);
 
-        notificationLabel = new JLabel("");
-        notificationLabel.setFont(FONT_LABEL);
-        notificationLabel.setForeground(new Color(255, 255, 255));
+    notificationLabel = new JLabel("");
+    notificationLabel.setFont(FONT_LABEL);
+    notificationLabel.setForeground(MAIN_COLOR);
         notificationLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
         notificationLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -163,8 +176,8 @@ public class OrderConfirmationPanel extends JPanel {
         };
 
         orderTable = new JTable(orderModel);
-        orderTable.setFont(new Font("Helvetica", Font.PLAIN, 14));
-        orderTable.setRowHeight(28);
+        orderTable.setFont(new Font("Segoe UI", Font.PLAIN, 17));
+        orderTable.setRowHeight(44);
         orderTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         orderTable.getSelectionModel().addListSelectionListener(event -> {
             if (!event.getValueIsAdjusting()) {
@@ -175,9 +188,37 @@ public class OrderConfirmationPanel extends JPanel {
         // Set custom renderer for status column (column index 6)
         orderTable.getColumnModel().getColumn(6).setCellRenderer(new StatusCellRenderer());
 
+        // Header styling and zebra rows for orders table
+        JTableHeader oth = orderTable.getTableHeader();
+        oth.setFont(FONT_TITLE);
+        oth.setBackground(WHITE);
+        oth.setForeground(COLOR_TEXT);
+        oth.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
+
+        DefaultTableCellRenderer ordersAltRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) c.setBackground((row % 2 == 0) ? TABLE_BG : ROW_ALT);
+                return c;
+            }
+        };
+        for (int i = 0; i < orderModel.getColumnCount(); i++) {
+            if (i != 6) { // keep custom renderer for status column
+                orderTable.getColumnModel().getColumn(i).setCellRenderer(ordersAltRenderer);
+            }
+        }
+
+        orderTable.setShowGrid(false);
+        orderTable.setIntercellSpacing(new Dimension(0, 0));
+        orderTable.setSelectionBackground(new Color(232, 244, 253));
+        orderTable.setSelectionForeground(COLOR_TEXT);
+        orderTable.setBackground(TABLE_BG);
+
         JScrollPane scroll = new JScrollPane(orderTable);
-        scroll.setBorder(createTitledBorder(" Order Confirmation "));
-        scroll.getViewport().setBackground(WHITE);
+        scroll.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER), new EmptyBorder(8, 8, 8, 8)));
+        scroll.getViewport().setBackground(TABLE_BG);
         return scroll;
     }
 
@@ -190,12 +231,36 @@ public class OrderConfirmationPanel extends JPanel {
         };
 
         orderDetailsTable = new JTable(orderDetailsModel);
-        orderDetailsTable.setFont(new Font("Helvetica", Font.PLAIN, 14));
-        orderDetailsTable.setRowHeight(28);
+        orderDetailsTable.setFont(new Font("Segoe UI", Font.PLAIN, 17));
+        orderDetailsTable.setRowHeight(44);
+        orderDetailsTable.setShowGrid(false);
+        orderDetailsTable.setIntercellSpacing(new Dimension(0, 0));
+        orderDetailsTable.setSelectionBackground(new Color(232, 244, 253));
+        orderDetailsTable.setSelectionForeground(COLOR_TEXT);
+        orderDetailsTable.setBackground(TABLE_BG);
+
+        JTableHeader dth = orderDetailsTable.getTableHeader();
+        dth.setFont(FONT_TITLE);
+        dth.setBackground(WHITE);
+        dth.setForeground(COLOR_TEXT);
+        dth.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
+
+        DefaultTableCellRenderer detailsAltRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) c.setBackground((row % 2 == 0) ? TABLE_BG : ROW_ALT);
+                return c;
+            }
+        };
+        for (int i = 0; i < orderDetailsModel.getColumnCount(); i++) {
+            orderDetailsTable.getColumnModel().getColumn(i).setCellRenderer(detailsAltRenderer);
+        }
 
         JScrollPane scroll = new JScrollPane(orderDetailsTable);
-        scroll.setBorder(createTitledBorder(" Order Details "));
-        scroll.getViewport().setBackground(WHITE);
+        scroll.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER), new EmptyBorder(8, 8, 8, 8)));
+        scroll.getViewport().setBackground(TABLE_BG);
         return scroll;
     }
 
@@ -203,23 +268,21 @@ public class OrderConfirmationPanel extends JPanel {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
         panel.setOpaque(false);
 
-        JButton confirmButton = createButton("✅ Confirm (Processing)");
-        JButton cancelOrderButton = createButton("✖ Cancel Order");
-        JButton doneButton = createButton("✅ Done Status Order");
-        JButton printButton = createButton("🖨️ Print Order");
-        JButton deleteButton = createButton("🗑️ Delete Order");
-        JButton gotoOrderButton = createButton("➡️ Go To Order");
-        JButton mergeButton = createButton("🔀 Merge Orders");
+    JButton cancelOrderButton = createButton("✖ Cancel Order");
+    JButton doneButton = createButton("✅ Done Status Order");
+    JButton printButton = createButton("🖨️ Print Order");
+    JButton deleteButton = createButton("🗑️ Delete Order");
+    JButton mergeButton = createButton("🔀 Merge Orders");
+    JButton gotoOrderButton = createButton("➡️ Go To Order");
 
-        confirmButton.addActionListener(event -> updateOrderStatus("Processing"));
-        cancelOrderButton.addActionListener(event -> updateOrderStatus("Cancelled"));
-        doneButton.addActionListener(event -> updateOrderStatus("Completed"));
-        printButton.addActionListener(event -> printOrder());
-        deleteButton.addActionListener(event -> deleteOrder());
-        mergeButton.addActionListener(event -> mergeSelectedOrders());
-        gotoOrderButton.addActionListener(event -> goToOrderWithCart());
+    // Removed Confirm (Processing) action - replaced by Go To Order which loads the order into the cart
+    cancelOrderButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { updateOrderStatus("Cancelled"); }});
+    doneButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { updateOrderStatus("Completed"); }});
+    printButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { printOrder(); }});
+    deleteButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { deleteOrder(); }});
+    mergeButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { mergeSelectedOrders(); }});
+    gotoOrderButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { goToOrderWithCart(); }});
 
-        panel.add(confirmButton);
         panel.add(cancelOrderButton);
         panel.add(doneButton);
         panel.add(printButton);
@@ -231,15 +294,11 @@ public class OrderConfirmationPanel extends JPanel {
     }
 
     private void loadOrders() {
-        // Store current order IDs before loading new data
-        previousOrderIds.clear();
-        for (int i = 0; i < orderModel.getRowCount(); i++) {
-            previousOrderIds.add((Integer) orderModel.getValueAt(i, 0));
-        }
-        
+        // Load fresh from DB and detect brand-new orders compared to lastSeenOrderIds
         orderModel.setRowCount(0);
         newOrderIds.clear();
-        
+        Set<Integer> currentIds = new HashSet<>();
+
         try {
             Connection conn = database.DatabaseConnector.getConnection();
             String sql = "SELECT o.order_id, COALESCE(o.table_number, 'N/A') AS table_number, " +
@@ -255,9 +314,10 @@ public class OrderConfirmationPanel extends JPanel {
             int detectedNew = 0;
             while (rs.next()) {
                 int orderId = rs.getInt("order_id");
-                
-                // Check if this is a new order
-                if (!previousOrderIds.contains(orderId)) {
+                currentIds.add(orderId);
+
+                // Check if this is a newly seen order compared to last load
+                if (!lastSeenOrderIds.contains(orderId)) {
                     newOrderIds.add(orderId);
                     detectedNew++;
                 }
@@ -277,6 +337,10 @@ public class OrderConfirmationPanel extends JPanel {
             rs.close();
             ps.close();
             conn.close();
+
+            // Update lastSeenOrderIds to current snapshot to avoid repeated notifications
+            lastSeenOrderIds.clear();
+            lastSeenOrderIds.addAll(currentIds);
 
             if (detectedNew > 0) {
                 showNewOrdersNotification(detectedNew);
@@ -394,10 +458,18 @@ public class OrderConfirmationPanel extends JPanel {
         }
     }
 
-    private void refreshData() {
-        loadOrders();
-        searchField.setText("");
-        filterComboBox.setSelectedIndex(0);
+    private void refreshAccordingToState() {
+        if (isFilterActive()) {
+            performSearch();
+        } else {
+            loadOrders();
+        }
+    }
+
+    private boolean isFilterActive() {
+        String term = searchField.getText() != null ? searchField.getText().trim() : "";
+        Object filter = filterComboBox.getSelectedItem();
+        return (term.length() > 0) || (filter != null && !"All Orders".equals(filter.toString()));
     }
     
     private void highlightNewOrders() {
@@ -416,9 +488,11 @@ public class OrderConfirmationPanel extends JPanel {
         if (notifyHideTimer != null && notifyHideTimer.isRunning()) {
             notifyHideTimer.stop();
         }
-        notifyHideTimer = new Timer(5000, event -> {
-            notificationLabel.setText("");
-            notificationLabel.setVisible(false);
+        notifyHideTimer = new Timer(5000, new java.awt.event.ActionListener() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) {
+                notificationLabel.setText("");
+                notificationLabel.setVisible(false);
+            }
         });
         notifyHideTimer.setRepeats(false);
         notifyHideTimer.start();
@@ -446,10 +520,7 @@ public class OrderConfirmationPanel extends JPanel {
         }
     }
 
-    private void exportReport() {
-        JOptionPane.showMessageDialog(this, "Export functionality will be implemented here", 
-            "Export Report", JOptionPane.INFORMATION_MESSAGE);
-    }
+    // Removed unused exportReport()
 
     private void printOrder() {
         int selectedRow = orderTable.getSelectedRow();
@@ -535,31 +606,35 @@ public class OrderConfirmationPanel extends JPanel {
             
             // Create print button
             JButton printButton = new JButton("🖨️ Print Receipt");
-            printButton.addActionListener(e -> {
-                try {
-                    receiptArea.print();
-                    JOptionPane.showMessageDialog(this, "Receipt sent to printer!", 
-                        "Print Success", JOptionPane.INFORMATION_MESSAGE);
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Print error: " + ex.getMessage(), 
-                        "Print Error", JOptionPane.ERROR_MESSAGE);
+            printButton.addActionListener(new java.awt.event.ActionListener() {
+                @Override public void actionPerformed(java.awt.event.ActionEvent e) {
+                    try {
+                        receiptArea.print();
+                        JOptionPane.showMessageDialog(OrderConfirmationPanel.this, "Receipt sent to printer!", 
+                            "Print Success", JOptionPane.INFORMATION_MESSAGE);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(OrderConfirmationPanel.this, "Print error: " + ex.getMessage(), 
+                            "Print Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             });
             
             // Create export button
             JButton exportButton = new JButton("💾 Export as Text");
-            exportButton.addActionListener(e -> {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setSelectedFile(new java.io.File("receipt_" + orderId + ".txt"));
-                if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                    try {
-                        java.io.File file = fileChooser.getSelectedFile();
-                        java.nio.file.Files.write(file.toPath(), receipt.toString().getBytes());
-                        JOptionPane.showMessageDialog(this, "Receipt exported to: " + file.getAbsolutePath(), 
-                            "Export Success", JOptionPane.INFORMATION_MESSAGE);
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(this, "Export error: " + ex.getMessage(), 
-                            "Export Error", JOptionPane.ERROR_MESSAGE);
+            exportButton.addActionListener(new java.awt.event.ActionListener() {
+                @Override public void actionPerformed(java.awt.event.ActionEvent e) {
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setSelectedFile(new java.io.File("receipt_" + orderId + ".txt"));
+                    if (fileChooser.showSaveDialog(OrderConfirmationPanel.this) == JFileChooser.APPROVE_OPTION) {
+                        try {
+                            java.io.File file = fileChooser.getSelectedFile();
+                            java.nio.file.Files.write(file.toPath(), receipt.toString().getBytes());
+                            JOptionPane.showMessageDialog(OrderConfirmationPanel.this, "Receipt exported to: " + file.getAbsolutePath(), 
+                                "Export Success", JOptionPane.INFORMATION_MESSAGE);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(OrderConfirmationPanel.this, "Export error: " + ex.getMessage(), 
+                                "Export Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                 }
             });
@@ -777,11 +852,7 @@ public class OrderConfirmationPanel extends JPanel {
         }
     }
 
-    private void viewReceipt() {
-        // Replaced by mergeSelectedOrders and done status order button
-        JOptionPane.showMessageDialog(this, "This action has been replaced.", 
-            "Info", JOptionPane.INFORMATION_MESSAGE);
-    }
+    // Removed unused viewReceipt()
 
     private void goToOrderWithCart() {
         int selectedRow = orderTable.getSelectedRow();
@@ -812,27 +883,23 @@ public class OrderConfirmationPanel extends JPanel {
         }
     }
 
-    private TitledBorder createTitledBorder(String title) {
-        TitledBorder border = BorderFactory.createTitledBorder(title);
-        border.setTitleFont(FONT_TITLE);
-        border.setTitleColor(LIGHT_TEXT);
-        return border;
-    }
+    // Removed unused createTitledBorder()
 
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(FONT_LABEL);
-        label.setForeground(LIGHT_TEXT);
+        label.setForeground(COLOR_TEXT);
         return label;
     }
 
     private JButton createButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(FONT_BUTTON);
-        button.setBackground(MAIN_COLOR);
-        button.setForeground(WHITE);
-        button.setFocusPainted(false);
-        button.setBorder(new EmptyBorder(10, 20, 10, 20));
+    JButton button = new JButton(text);
+    button.setFont(FONT_BUTTON);
+    button.setBackground(MAIN_COLOR);
+    button.setForeground(WHITE);
+    button.setFocusPainted(false);
+    button.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(COLOR_BORDER), new EmptyBorder(10, 20, 10, 20)));
         return button;
     }
     
@@ -850,30 +917,33 @@ public class OrderConfirmationPanel extends JPanel {
                 boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             
+            // Zebra background when not selected
+            if (!isSelected) {
+                c.setBackground((row % 2 == 0) ? TABLE_BG : ROW_ALT);
+            }
+
             if (value != null) {
                 String status = value.toString();
-                int orderId = (Integer) table.getModel().getValueAt(row, 0);
+                int modelRow = table.convertRowIndexToModel(row);
+                int orderId = (Integer) table.getModel().getValueAt(modelRow, 0);
 
-                // Determine background color purely by status
+                // Text color by status (uses constants to keep theme consistent)
                 if ("Pending".equalsIgnoreCase(status)) {
-                    c.setBackground(new Color(173, 216, 230)); // Light blue for pending
+                    c.setForeground(MAIN_COLOR);
                 } else if ("Processing".equalsIgnoreCase(status) || "Confirmed".equalsIgnoreCase(status) || "Completed".equalsIgnoreCase(status)) {
-                    c.setBackground(new Color(144, 238, 144)); // Light green
+                    c.setForeground(SUCCESS_COLOR);
                 } else if ("Cancelled".equalsIgnoreCase(status) || "Canceled".equalsIgnoreCase(status)) {
-                    c.setBackground(new Color(255, 182, 193)); // Light red
+                    c.setForeground(DANGER_COLOR);
                 } else {
-                    c.setBackground(Color.WHITE);
+                    c.setForeground(COLOR_TEXT);
                 }
 
-                // Prepend new icon if this is a newly arrived order (does not affect color)
+                // Prepend new icon if this is a newly arrived order
                 String displayText = status;
                 if (newOrderIds.contains(orderId)) {
                     displayText = "🆕 " + displayText;
                 }
                 ((JLabel) c).setText(displayText);
-
-                // Text color
-                c.setForeground(Color.BLACK);
             }
             
             return c;

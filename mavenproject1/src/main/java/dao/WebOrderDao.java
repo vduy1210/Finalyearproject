@@ -151,6 +151,75 @@ public class WebOrderDao {
         return 0.0;
     }
 
+    public long getOrderCount(LocalDateTime from, LocalDateTime to) {
+        String[][] variants = new String[][]{
+                {"order_id", "order_date"},
+                {"order_id", "created_at"},
+                {"id", "order_date"},
+                {"id", "created_at"}
+        };
+        for (String[] v : variants) {
+            String dateCol = v[1];
+            String sql = "SELECT COUNT(*) AS cnt FROM web_order WHERE " + dateCol + " BETWEEN ? AND ?";
+            try (Connection conn = DatabaseConnector.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getLong("cnt");
+                }
+            } catch (SQLException e) {
+                // try next variant
+            }
+        }
+        return 0L;
+    }
+
+    public long getDistinctCustomerCount(LocalDateTime from, LocalDateTime to) {
+        String[][] variants = new String[][]{
+                {"order_date"},
+                {"created_at"}
+        };
+        for (String[] v : variants) {
+            String dateCol = v[0];
+            String sql = "SELECT COUNT(DISTINCT customer_id) AS cnt FROM web_order WHERE " + dateCol + " BETWEEN ? AND ?";
+            try (Connection conn = DatabaseConnector.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getLong("cnt");
+                }
+            } catch (SQLException e) {
+                // try next variant
+            }
+        }
+        return 0L;
+    }
+
+    public long getProductsSold(LocalDateTime from, LocalDateTime to) {
+        // Sum quantities from web_order_details joined to web_order filtered by order date
+        String[][] variants = new String[][]{
+                {"order_date"},
+                {"created_at"}
+        };
+        for (String[] v : variants) {
+            String dateCol = v[0];
+            String sql = "SELECT COALESCE(SUM(od.quantity),0) AS qty FROM web_order_details od JOIN web_order o ON od.order_id = o.order_id WHERE o." + dateCol + " BETWEEN ? AND ?";
+            try (Connection conn = DatabaseConnector.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setTimestamp(1, Timestamp.valueOf(from));
+                ps.setTimestamp(2, Timestamp.valueOf(to));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getLong("qty");
+                }
+            } catch (SQLException e) {
+                // try next variant
+            }
+        }
+        return 0L;
+    }
+
     public List<Order> listWebOrders(LocalDateTime from, LocalDateTime to) {
         // Try multiple schema variants, alias to stable names
         String[][] variants = new String[][]{
