@@ -105,7 +105,8 @@ public class ProductDialog extends JDialog {
             stockField.setText(product[3].toString());
         }
 
-        JButton cancelButton = new JButton("Cancel");
+    JButton cancelButton = new RoundedButton("Cancel");
+    util.UIUtils.styleActionButton(cancelButton, 120);
         cancelButton.setFont(FONT_BUTTON);
         cancelButton.setBackground(COLOR_PRIMARY);
         cancelButton.setForeground(Color.WHITE);
@@ -115,7 +116,8 @@ public class ProductDialog extends JDialog {
             @Override public void actionPerformed(java.awt.event.ActionEvent e) { dispose(); }
         });
 
-        JButton saveButton = new JButton("Save");
+    JButton saveButton = new RoundedButton("Save");
+    util.UIUtils.styleActionButton(saveButton, 120);
         saveButton.setFont(FONT_BUTTON);
         saveButton.setBackground(COLOR_PRIMARY);
         saveButton.setForeground(Color.WHITE);

@@ -80,17 +80,9 @@ public class CustomerInfoDialog extends JDialog {
         JButton confirmButton = createButton("Confirm");
         JButton cancelButton = createButton("Cancel");
         
-        confirmButton.addActionListener(e -> {
-            if (validateFields()) {
-                confirmed = true;
-                dispose();
-            }
-        });
+        confirmButton.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(java.awt.event.ActionEvent e) { if (validateFields()) { confirmed = true; dispose(); } } });
         
-        cancelButton.addActionListener(e -> {
-            confirmed = false;
-            dispose();
-        });
+        cancelButton.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(java.awt.event.ActionEvent e) { confirmed = false; dispose(); } });
         
         buttonPanel.add(confirmButton);
         buttonPanel.add(cancelButton);
@@ -107,7 +99,8 @@ public class CustomerInfoDialog extends JDialog {
     }
     
     private JButton createButton(String text) {
-        JButton button = new JButton(text);
+    JButton button = new RoundedButton(text);
+    util.UIUtils.styleActionButton(button, 120);
         button.setFont(FONT_LABEL);
         button.setBackground(MAIN_COLOR);
         button.setForeground(WHITE);

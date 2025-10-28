@@ -1,9 +1,8 @@
 package view;
 
-import database.DatabaseConnector;
 import javax.swing.*;
 import java.awt.*;
-import dao.UserDAO;
+import dao.UserDAO; // Keeping this import as it is used in the code
 
 public class RegisterForm extends JFrame {
 
@@ -76,13 +75,15 @@ public class RegisterForm extends JFrame {
         passwordField.setBackground(Color.WHITE);
         formPanel.add(passwordField);
 
-        JButton registerButton = new JButton("Register");
+    JButton registerButton = new RoundedButton("Register");
+    util.UIUtils.styleActionButton(registerButton, 140);
         registerButton.setBounds(280, 400, 140, 35);
         registerButton.setBackground(Color.LIGHT_GRAY);
         registerButton.setFont(new Font("Arial", Font.BOLD, 16));
         formPanel.add(registerButton);
 
-        JButton gotoLoginButton = new JButton("Go to Login");
+    JButton gotoLoginButton = new RoundedButton("Go to Login");
+    util.UIUtils.styleActionButton(gotoLoginButton, 140);
         gotoLoginButton.setBounds(280, 450, 140, 35);
         gotoLoginButton.setBackground(Color.LIGHT_GRAY);
         gotoLoginButton.setFont(new Font("Arial", Font.BOLD, 16));
@@ -90,33 +91,36 @@ public class RegisterForm extends JFrame {
 
         // --- Action Listeners ---
 
-        gotoLoginButton.addActionListener(e -> {
-            LoginForm loginForm = new LoginForm();
-            loginForm.setVisible(true);
-            dispose();
-        });
-
-        registerButton.addActionListener(e -> {
-            String username = registerUsernameField.getText();
-            String email = emailField.getText();
-            String password = new String(passwordField.getPassword());
-
-            // THÊM: Kiểm tra input
-            if (username.trim().isEmpty() || email.trim().isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill in all fields.", "Warning", JOptionPane.WARNING_MESSAGE);
-                return; // Dừng thực thi nếu có lỗi
-            }
-
-            UserDAO userDAO = new UserDAO();
-            if (userDAO.registerUser(username, email, password)) {
-                JOptionPane.showMessageDialog(this, "Registration successful!");
-
-                // SỬA LỖI: Hiển thị LoginForm trước khi đóng form hiện tại
+        gotoLoginButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
                 LoginForm loginForm = new LoginForm();
                 loginForm.setVisible(true);
                 dispose();
-            } else {
-                JOptionPane.showMessageDialog(this, "Registration failed. Username or email may already exist.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        registerButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                String username = registerUsernameField.getText();
+                String email = emailField.getText();
+                String password = new String(passwordField.getPassword());
+
+                // Validate input
+                if (username.trim().isEmpty() || email.trim().isEmpty() || password.isEmpty()) {
+                    JOptionPane.showMessageDialog(RegisterForm.this, "Please fill in all fields.", "Warning", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                UserDAO userDAO = new UserDAO();
+                if (userDAO.registerUser(username, email, password)) {
+                    JOptionPane.showMessageDialog(RegisterForm.this, "Registration successful!");
+                    LoginForm loginForm = new LoginForm();
+                    loginForm.setVisible(true);
+                    RegisterForm.this.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(RegisterForm.this, "Registration failed. Username or email may already exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
     }

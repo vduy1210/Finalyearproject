@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 
 import javax.swing.*;
+import util.UIUtils;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -32,9 +33,25 @@ public class OrderPanel extends JPanel {
     }
 
     private OrderListener orderListener;
+    
+    // Helper class to store customer information
+    private static class CustomerInfo {
+        int id;
+        String name;
+        String phone;
+        String email;
+        
+        CustomerInfo(int id, String name, String phone, String email) {
+            this.id = id;
+            this.name = name;
+            this.phone = phone;
+            this.email = email;
+        }
+    }
+    
     // --- Các hằng số và biến ---
     // Light theme to match the modernized UI elsewhere
-    private static final Color BACKGROUND_COLOR = new Color(0xDD, 0xE3, 0xEA); // slightly darker to pop the tables
+    private static final Color BACKGROUND_COLOR = new Color(240, 242, 245); // Gray tinted white
     private static final Color MAIN_COLOR = new Color(52, 152, 219);
     private static final Color SUCCESS_COLOR = new Color(39, 174, 96);
     private static final Color DANGER_COLOR = new Color(231, 76, 60);
@@ -54,9 +71,10 @@ public class OrderPanel extends JPanel {
     private DefaultTableModel cartModel;
     private JTextField totalTextField;
     private JTextField customerPhoneField;
-    private JTextField discountField;
+    private JComboBox<String> tableNumberCombo;
     private JSpinner quantitySpinner;
     private NumberFormat currencyFormat;
+    private double currentDiscountPercent = 0.0; // Store customer discount %
 
     public OrderPanel() {
         // ... Hàm khởi tạo và bố cục (giữ nguyên) ...
@@ -98,6 +116,11 @@ public class OrderPanel extends JPanel {
 
     // Load an existing order's items into the cart by orderId
     public void loadOrderIntoCart(int orderId) {
+        loadOrderIntoCart(orderId, null);
+    }
+    
+    // Load an existing order's items and table number into the cart
+    public void loadOrderIntoCart(int orderId, String tableNumber) {
         // Clear current cart
         if (cartModel != null) {
             cartModel.setRowCount(0);
@@ -119,8 +142,9 @@ public class OrderPanel extends JPanel {
                 }
             }
 
-            // Optionally load customer phone if present on order
-            String phoneSql = "SELECT COALESCE(shipping_phone, c.phone) AS phone FROM web_order o " +
+            // Load customer phone and table number if present on order
+            String phoneSql = "SELECT COALESCE(shipping_phone, c.phone) AS phone, o.table_number " +
+                              "FROM web_order o " +
                               "LEFT JOIN customers c ON o.customer_id = c.id WHERE o.order_id = ?";
             try (PreparedStatement ps2 = conn.prepareStatement(phoneSql)) {
                 ps2.setInt(1, orderId);
@@ -129,6 +153,20 @@ public class OrderPanel extends JPanel {
                         String phone = rs2.getString("phone");
                         if (phone != null && customerPhoneField != null) {
                             customerPhoneField.setText(phone);
+                        }
+                        
+                        // Set table number if available from database or parameter
+                        String dbTableNumber = rs2.getString("table_number");
+                        String tableToSet = (tableNumber != null) ? tableNumber : dbTableNumber;
+                        
+                        if (tableToSet != null && tableNumberCombo != null) {
+                            // Find and select the table in combo box
+                            for (int i = 0; i < tableNumberCombo.getItemCount(); i++) {
+                                if (tableNumberCombo.getItemAt(i).equals(tableToSet)) {
+                                    tableNumberCombo.setSelectedIndex(i);
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -203,26 +241,29 @@ public class OrderPanel extends JPanel {
         quantitySpinner.setFont(FONT_LABEL);
         quantitySpinner.setMaximumSize(new Dimension(80, 40));
 
-        JButton addButton = new JButton("Add to cart");
-        addButton.setFont(FONT_BUTTON);
-        addButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        addButton.setBackground(SUCCESS_COLOR);
-        addButton.setForeground(WHITE);
-        addButton.setFocusPainted(false);
-        addButton.setBorder(new EmptyBorder(12, 20, 12, 20));
+    JButton addButton = new RoundedButton("Add");
+    addButton.setFont(FONT_BUTTON);
+    addButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    addButton.setBackground(SUCCESS_COLOR);
+    addButton.setForeground(WHITE);
+    addButton.setFocusPainted(false);
+    addButton.setBorder(new EmptyBorder(12, 20, 12, 20));
+    UIUtils.styleActionButton(addButton, 160);
 
+    // icons removed per user preference
         addButton.addActionListener(new java.awt.event.ActionListener() {
             @Override public void actionPerformed(java.awt.event.ActionEvent e) { handleAddToCart(); }
         });
+    JButton removeButton = new RoundedButton("Remove");
+    removeButton.setFont(FONT_BUTTON);
+    removeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+    removeButton.setBackground(DANGER_COLOR);
+    removeButton.setForeground(WHITE);
+    removeButton.setFocusPainted(false);
+    removeButton.setBorder(new EmptyBorder(12, 20, 12, 20));
+    UIUtils.styleActionButton(removeButton, 160);
 
-        JButton removeButton = new JButton("Remove from cart");
-        removeButton.setFont(FONT_BUTTON);
-        removeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        removeButton.setBackground(DANGER_COLOR);
-        removeButton.setForeground(WHITE);
-        removeButton.setFocusPainted(false);
-        removeButton.setBorder(new EmptyBorder(12, 20, 12, 20));
-
+    // icons removed per user preference
         removeButton.addActionListener(new java.awt.event.ActionListener() {
             @Override public void actionPerformed(java.awt.event.ActionEvent e) { handleRemoveFromCart(); }
         });
@@ -289,15 +330,26 @@ public class OrderPanel extends JPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.15; panel.add(createLabel("Customer Phone:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.35; customerPhoneField = new JTextField(); panel.add(customerPhoneField, gbc);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.15; panel.add(createLabel("Customer:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 0.35; 
+        customerPhoneField = new JTextField(); 
+        customerPhoneField.addCaretListener(new javax.swing.event.CaretListener() {
+            @Override public void caretUpdate(javax.swing.event.CaretEvent e) { 
+                updateDiscountFromCustomer(); 
+            }
+        });
+        panel.add(customerPhoneField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.15; panel.add(createLabel("Discount:"), gbc);
-        gbc.gridx = 1; gbc.weightx = 0.35; discountField = new JTextField("0"); 
-        discountField.addCaretListener(new javax.swing.event.CaretListener() {
-            @Override public void caretUpdate(javax.swing.event.CaretEvent e) { updateTotal(); }
-        }); // Auto-update total when discount changes
-        panel.add(discountField, gbc);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.15; panel.add(createLabel("Table:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 0.35; 
+        // Create table numbers 1-20
+        String[] tableNumbers = new String[21];
+        tableNumbers[0] = "Select Table";
+        for (int i = 1; i <= 20; i++) {
+            tableNumbers[i] = "Table " + i;
+        }
+        tableNumberCombo = new JComboBox<>(tableNumbers);
+        panel.add(tableNumberCombo, gbc);
 
         gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0.15; panel.add(createLabel("Total:"), gbc);
         gbc.gridx = 3; gbc.weightx = 0.35; totalTextField = new JTextField("0"); totalTextField.setEditable(false); panel.add(totalTextField, gbc);
@@ -313,16 +365,16 @@ public class OrderPanel extends JPanel {
     panel.setOpaque(false);
 
         JButton createOrderButton = createButton("Create Order");
-        JButton exportReceiptButton = createButton("Export Receipt");
+        JButton printOrderButton = createButton("Print Order");
         JButton cancelButton = createButton("Cancel Order");
-        JButton refreshButton = createButton("🔄 Refresh Products");
+        JButton refreshButton = createButton("Refresh Products");
 
         // Add event listeners
         createOrderButton.addActionListener(new java.awt.event.ActionListener() {
             @Override public void actionPerformed(java.awt.event.ActionEvent e) { handleCreateOrder(); }
         });
-        exportReceiptButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override public void actionPerformed(java.awt.event.ActionEvent e) { handleExportReceipt(); }
+        printOrderButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override public void actionPerformed(java.awt.event.ActionEvent e) { handlePrintOrder(); }
         });
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             @Override public void actionPerformed(java.awt.event.ActionEvent e) { handleCancelOrder(); }
@@ -332,7 +384,7 @@ public class OrderPanel extends JPanel {
         });
 
         panel.add(createOrderButton);
-        panel.add(exportReceiptButton);
+        panel.add(printOrderButton);
         panel.add(cancelButton);
         panel.add(refreshButton);
 
@@ -409,16 +461,43 @@ public class OrderPanel extends JPanel {
             subtotalSum += (Double) cartModel.getValueAt(i, 2);
         }
 
-        // Apply discount if any
-        double discount = 0.0;
-        try {
-            discount = Double.parseDouble(discountField.getText().trim());
-        } catch (NumberFormatException e) {
-            discount = 0.0;
-        }
-
-        double finalTotal = subtotalSum - discount;
+        // Apply discount percentage based on customer tier
+        double discountAmount = subtotalSum * (currentDiscountPercent / 100.0);
+        double finalTotal = subtotalSum - discountAmount;
         totalTextField.setText(currencyFormat.format(finalTotal));
+    }
+    
+    private void updateDiscountFromCustomer() {
+        String customerPhone = customerPhoneField.getText().trim();
+        if (customerPhone.isEmpty() || !customerPhone.matches("\\d+")) {
+            currentDiscountPercent = 0.0;
+            updateTotal();
+            return;
+        }
+        
+        // Check if customer exists and get their discount
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            String sql = "SELECT accumulatedPoint FROM customers WHERE phone = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, customerPhone);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                float points = rs.getFloat("accumulatedPoint");
+                currentDiscountPercent = CustomerManagementPanel.getDiscountForPoints(points);
+            } else {
+                currentDiscountPercent = 0.0;
+            }
+            
+            rs.close();
+            ps.close();
+            conn.close();
+            updateTotal();
+        } catch (SQLException e) {
+            currentDiscountPercent = 0.0;
+            updateTotal();
+        }
     }
 
     public void loadProducts() {
@@ -452,6 +531,12 @@ public class OrderPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Please enter a valid phone number (numbers only)!", "Invalid Phone Number", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        
+        // Validate table selection
+        if (tableNumberCombo.getSelectedIndex() == 0) {
+            JOptionPane.showMessageDialog(this, "Please select a table number!", "Missing Table Number", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         // Validate cart is not empty
         if (cartModel.getRowCount() == 0) {
@@ -459,47 +544,64 @@ public class OrderPanel extends JPanel {
             return;
         }
 
-        // Get discount value
-        double discount = 0.0;
-        try {
-            discount = Double.parseDouble(discountField.getText().trim());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid discount value!", "Invalid Discount", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Calculate final total
+        // Calculate final total with discount
         double subtotal = 0.0;
         for (int i = 0; i < cartModel.getRowCount(); i++) {
             subtotal += (Double) cartModel.getValueAt(i, 2);
         }
-        double finalTotal = subtotal - discount;
+        double discountAmount = subtotal * (currentDiscountPercent / 100.0);
+        double finalTotal = subtotal - discountAmount;
+        
+        String tableNumber = (String) tableNumberCombo.getSelectedItem();
 
-        // Confirm order
+        // Confirm order with table and discount info
+        String confirmMessage = String.format(
+            "Create order:\n" +
+            "Customer: %s\n" +
+            "Table: %s\n" +
+            "Discount: %.1f%%\n" +
+            "Subtotal: %s\n" +
+            "Discount Amount: %s\n" +
+            "Total: %s",
+            customerPhone, tableNumber, currentDiscountPercent,
+            currencyFormat.format(subtotal),
+            currencyFormat.format(discountAmount),
+            currencyFormat.format(finalTotal)
+        );
+        
         int confirm = JOptionPane.showConfirmDialog(this, 
-            "Create order for phone: " + customerPhone + "?\nTotal: " + currencyFormat.format(finalTotal), 
+            confirmMessage, 
             "Confirm Order", JOptionPane.YES_NO_OPTION);
             
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                // Get or create customer
-                int customerId = getOrCreateCustomer(customerPhone);
-                if (customerId == -1) {
+                // Get or create customer and retrieve full info
+                CustomerInfo customerInfo = getOrCreateCustomer(customerPhone);
+                if (customerInfo == null) {
                     JOptionPane.showMessageDialog(this, "Error creating customer!", "Database Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 // Get current staff ID (assuming staff ID 1 for now)
                 int staffId = getCurrentStaffId();
+                
+                // Get table number
+                String selectedTable = (String) tableNumberCombo.getSelectedItem();
 
                 // Create order object
                 Order order = new Order();
-                order.setCustomerId(customerId);
+                order.setCustomerId(customerInfo.id);
                 order.setStaffId(staffId);
                 order.setOrderDate(LocalDateTime.now());
                 order.setTotalAmount(finalTotal);
                 order.setTax(0.0); // No tax for now
-                order.setDiscount(discount);
+                order.setDiscount(discountAmount);
+                order.setTableNumber(selectedTable);
+                
+                // Set shipping information from customer data
+                order.setShippingName(customerInfo.name);
+                order.setShippingPhone(customerInfo.phone);
+                order.setShippingEmail(customerInfo.email);
 
                 // Create order details list
                 ArrayList<OrderDetails> orderDetails = new ArrayList<>();
@@ -521,15 +623,24 @@ public class OrderPanel extends JPanel {
             boolean success = appOrderDao.createAppOrder(order, orderDetails);
 
                 if (success) {
+                    String successMessage = String.format(
+                        "Order created successfully!\n" +
+                        "Table: %s\n" +
+                        "Discount: %.1f%%\n" +
+                        "Total: %s",
+                        tableNumber, currentDiscountPercent,
+                        currencyFormat.format(finalTotal)
+                    );
                     JOptionPane.showMessageDialog(this, 
-                        "Order created successfully!\nOrder Total: " + currencyFormat.format(finalTotal), 
+                        successMessage, 
                         "Order Created", JOptionPane.INFORMATION_MESSAGE);
                     
                     // Clear the form
                     cartModel.setRowCount(0);
                     customerPhoneField.setText("");
-                    discountField.setText("0");
+                    tableNumberCombo.setSelectedIndex(0);
                     totalTextField.setText("0");
+                    currentDiscountPercent = 0.0;
 
                     // Notify listener so other panels can refresh
                     if (orderListener != null) {
@@ -547,15 +658,74 @@ public class OrderPanel extends JPanel {
         }
     }
 
-    private void handleExportReceipt() {
+    private void handlePrintOrder() {
         if (cartModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "No items in cart to export!", "Empty Cart", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "No items in cart to print!", "Empty Cart", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // TODO: Implement receipt generation and export
-        JOptionPane.showMessageDialog(this, "Receipt export functionality will be implemented here!", 
-            "Export Receipt", JOptionPane.INFORMATION_MESSAGE);
+        // Validate customer phone
+        String customerPhone = customerPhoneField.getText().trim();
+        if (customerPhone.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter customer phone number!", "Missing Customer Phone", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Validate table selection
+        if (tableNumberCombo.getSelectedIndex() == 0) {
+            JOptionPane.showMessageDialog(this, "Please select a table number!", "Missing Table Number", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        String tableNumber = (String) tableNumberCombo.getSelectedItem();
+        
+        // Calculate totals
+        double subtotal = 0.0;
+        for (int i = 0; i < cartModel.getRowCount(); i++) {
+            subtotal += (Double) cartModel.getValueAt(i, 2);
+        }
+        double discountAmount = subtotal * (currentDiscountPercent / 100.0);
+        double finalTotal = subtotal - discountAmount;
+
+        // Create printable content
+        StringBuilder receipt = new StringBuilder();
+        receipt.append("=====================================\n");
+        receipt.append("           ORDER RECEIPT\n");
+        receipt.append("=====================================\n");
+        receipt.append("Customer: ").append(customerPhone).append("\n");
+        receipt.append("Table: ").append(tableNumber).append("\n");
+        receipt.append("Date: ").append(new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date())).append("\n");
+        receipt.append("-------------------------------------\n");
+        
+        for (int i = 0; i < cartModel.getRowCount(); i++) {
+            String product = (String) cartModel.getValueAt(i, 0);
+            int quantity = (Integer) cartModel.getValueAt(i, 1);
+            double itemTotal = (Double) cartModel.getValueAt(i, 2);
+            receipt.append(String.format("%-20s x%d\n", product, quantity));
+            receipt.append(String.format("                    %s\n", currencyFormat.format(itemTotal)));
+        }
+        
+        receipt.append("-------------------------------------\n");
+        receipt.append(String.format("Subtotal:           %s\n", currencyFormat.format(subtotal)));
+        receipt.append(String.format("Discount (%.1f%%):    -%s\n", currentDiscountPercent, currencyFormat.format(discountAmount)));
+        receipt.append("=====================================\n");
+        receipt.append(String.format("TOTAL:              %s\n", currencyFormat.format(finalTotal)));
+        receipt.append("=====================================\n");
+
+        // Display print dialog
+        JTextArea textArea = new JTextArea(receipt.toString());
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        textArea.setEditable(false);
+        
+        try {
+            boolean printed = textArea.print();
+            if (printed) {
+                JOptionPane.showMessageDialog(this, "Order printed successfully!", "Print Complete", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error printing order: " + e.getMessage(), "Print Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void handleCancelOrder() {
@@ -571,8 +741,9 @@ public class OrderPanel extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             cartModel.setRowCount(0);
             customerPhoneField.setText("");
-            discountField.setText("0");
+            tableNumberCombo.setSelectedIndex(0);
             totalTextField.setText("0");
+            currentDiscountPercent = 0.0;
             JOptionPane.showMessageDialog(this, "Order cancelled successfully!", 
                 "Order Cancelled", JOptionPane.INFORMATION_MESSAGE);
         }
@@ -580,7 +751,7 @@ public class OrderPanel extends JPanel {
 
     // --- Database Helper Methods ---
     
-    private int getOrCreateCustomer(String customerPhone) {
+    private CustomerInfo getOrCreateCustomer(String customerPhone) {
         Connection conn = null;
         PreparedStatement findStmt = null;
         PreparedStatement insertStmt = null;
@@ -590,13 +761,14 @@ public class OrderPanel extends JPanel {
         try {
             conn = database.DatabaseConnector.getConnection();
             // Try to find existing customer by phone
-            String findSql = "SELECT id, name, accumulatedPoint FROM customers WHERE phone = ?";
+            String findSql = "SELECT id, name, email, accumulatedPoint FROM customers WHERE phone = ?";
             findStmt = conn.prepareStatement(findSql);
             findStmt.setString(1, customerPhone);
             rs = findStmt.executeQuery();
             if (rs.next()) {
                 int customerId = rs.getInt("id");
                 String customerName = rs.getString("name");
+                String customerEmail = rs.getString("email");
                 float currentPoints = rs.getFloat("accumulatedPoint");
                 // Add 10 points for existing customer
                 String updateSql = "UPDATE customers SET accumulatedPoint = accumulatedPoint + 10 WHERE id = ?";
@@ -609,14 +781,14 @@ public class OrderPanel extends JPanel {
                         "Welcome back, " + customerName + "!\n+10 points added to your account.\nTotal points: " + newPoints,
                         "Existing Customer", JOptionPane.INFORMATION_MESSAGE);
                 }
-                return customerId;
+                return new CustomerInfo(customerId, customerName, customerPhone, customerEmail);
             }
             // New customer: show dialog
             JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
             CustomerInfoDialog dialog = new CustomerInfoDialog(parentFrame, customerPhone);
             dialog.setVisible(true);
             if (!dialog.isConfirmed()) {
-                return -1; // User cancelled
+                return null; // User cancelled
             }
             String customerName = dialog.getCustomerName();
             String customerEmail = dialog.getCustomerEmail();
@@ -634,12 +806,13 @@ public class OrderPanel extends JPanel {
                 JOptionPane.showMessageDialog(this,
                     "New customer created successfully!\nName: " + customerName + "\nInitial points: 10",
                     "New Customer", JOptionPane.INFORMATION_MESSAGE);
+                return new CustomerInfo(customerId, customerName, customerPhone, customerEmail);
             }
-            return customerId;
+            return null;
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            return -1;
+            return null;
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -671,7 +844,7 @@ public class OrderPanel extends JPanel {
     }
 
     private JButton createButton(String text) {
-        JButton button = new JButton(text);
+    JButton button = new RoundedButton(text);
     button.setFont(FONT_BUTTON);
     button.setBackground(MAIN_COLOR);
     button.setForeground(WHITE);

@@ -24,7 +24,7 @@ import javax.swing.Timer;
 public class OrderConfirmationPanel extends JPanel {
     // --- Constants and variables ---
     // Light theme to match redesigned panels
-    private static final Color BACKGROUND_COLOR = new Color(0xDD, 0xE3, 0xEA); // slightly darker gray backdrop
+    private static final Color BACKGROUND_COLOR = new Color(240, 242, 245); // Gray tinted white
     private static final Color MAIN_COLOR = new Color(52, 152, 219);
     private static final Color SUCCESS_COLOR = new Color(39, 174, 96);
     private static final Color DANGER_COLOR = new Color(231, 76, 60);
@@ -268,19 +268,36 @@ public class OrderConfirmationPanel extends JPanel {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
         panel.setOpaque(false);
 
-    JButton cancelOrderButton = createButton("✖ Cancel Order");
-    JButton doneButton = createButton("✅ Done Status Order");
-    JButton printButton = createButton("🖨️ Print Order");
-    JButton deleteButton = createButton("🗑️ Delete Order");
-    JButton mergeButton = createButton("🔀 Merge Orders");
-    JButton gotoOrderButton = createButton("➡️ Go To Order");
+    JButton cancelOrderButton = createButton("Cancel");
+    // icons removed per user preference
+    JButton doneButton = createButton("Complete");
+    // icons removed per user preference
+    JButton printButton = createButton("Print");
+    // icons removed per user preference
+    JButton deleteButton = createButton("Delete");
+    // icons removed per user preference
+    JButton mergeButton = createButton("Merge");
+    // icons removed per user preference
+    JButton gotoOrderButton = createButton("Open");
+    // icons removed per user preference
 
-    // Removed Confirm (Processing) action - replaced by Go To Order which loads the order into the cart
+    // Removed Confirm (Processing) action - replaced by Open which loads the order into the cart
+    cancelOrderButton.setToolTipText("Cancel selected order");
     cancelOrderButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { updateOrderStatus("Cancelled"); }});
+
+    doneButton.setToolTipText("Mark selected order as completed");
     doneButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { updateOrderStatus("Completed"); }});
+
+    printButton.setToolTipText("Print receipt for selected order");
     printButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { printOrder(); }});
+
+    deleteButton.setToolTipText("Delete selected order");
     deleteButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { deleteOrder(); }});
+
+    mergeButton.setToolTipText("Merge selected orders into one");
     mergeButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { mergeSelectedOrders(); }});
+
+    gotoOrderButton.setToolTipText("Open selected order in Order panel");
     gotoOrderButton.addActionListener(new java.awt.event.ActionListener() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { goToOrderWithCart(); }});
 
         panel.add(cancelOrderButton);
@@ -605,7 +622,8 @@ public class OrderConfirmationPanel extends JPanel {
             scrollPane.setPreferredSize(new Dimension(500, 400));
             
             // Create print button
-            JButton printButton = new JButton("🖨️ Print Receipt");
+            JButton printButton = new RoundedButton("🖨️ Print Receipt");
+            util.UIUtils.styleActionButton(printButton, 160);
             printButton.addActionListener(new java.awt.event.ActionListener() {
                 @Override public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
@@ -620,7 +638,8 @@ public class OrderConfirmationPanel extends JPanel {
             });
             
             // Create export button
-            JButton exportButton = new JButton("💾 Export as Text");
+            JButton exportButton = new RoundedButton("💾 Export as Text");
+            util.UIUtils.styleActionButton(exportButton, 160);
             exportButton.addActionListener(new java.awt.event.ActionListener() {
                 @Override public void actionPerformed(java.awt.event.ActionEvent e) {
                     JFileChooser fileChooser = new JFileChooser();
@@ -893,7 +912,8 @@ public class OrderConfirmationPanel extends JPanel {
     }
 
     private JButton createButton(String text) {
-    JButton button = new JButton(text);
+    JButton button = new RoundedButton(text);
+    util.UIUtils.styleActionButton(button, 140);
     button.setFont(FONT_BUTTON);
     button.setBackground(MAIN_COLOR);
     button.setForeground(WHITE);

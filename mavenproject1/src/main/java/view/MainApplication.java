@@ -14,11 +14,12 @@ public class MainApplication extends JFrame {
 
     // ======= MODERN COLOR SCHEME & TYPOGRAPHY =======
     private static final Color PRIMARY_COLOR = new Color(33, 150, 243);       // Blue
-    private static final Color SIDEBAR_COLOR = new Color(250, 251, 252);      // Very Light Gray
-    private static final Color HEADER_COLOR = new Color(255, 255, 255);       // White
+    private static final Color SIDEBAR_COLOR = new Color(240, 242, 245);      // White with gray tint
+    // Full header background color requested by user (#1452f1)
+    private static final Color HEADER_BG = new Color(20, 82, 241);
     private static final Color BACKGROUND_COLOR = new Color(248, 250, 252);   // Light Blue Gray
     private static final Color TEXT_PRIMARY = new Color(33, 33, 33);          // Dark Gray
-    private static final Color TEXT_SECONDARY = new Color(117, 117, 117);     // Medium Gray
+    // TEXT_SECONDARY removed (unused)
     private static final Color DANGER_COLOR = new Color(244, 67, 54);         // Red
     private static final Color BORDER_COLOR = new Color(224, 224, 224);       // Light Border
     private static final Color WHITE = Color.WHITE;
@@ -45,7 +46,7 @@ public class MainApplication extends JFrame {
         this.staffRole = staffRole;
         
         // Modern window configuration
-        setTitle("Restaurant Management System");
+        setTitle("Coffee Shop Management System");
         setSize(1920, 1080);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -72,7 +73,9 @@ public class MainApplication extends JFrame {
         });
         contentPanel.add(orderPanel, "ORDER");
         contentPanel.add(new OrderConfirmationPanel(), "HISTORY");
-        contentPanel.add(new RevenueTodayPanel(), "REVENUE");
+    contentPanel.add(new RevenueTodayPanel(), "REVENUE");
+    // Customer management panel
+    contentPanel.add(new CustomerManagementPanel(), "CUSTOMERS");
 
         // Admin-only panels (added but only shown via menu for ADMIN)
         userManagementPanel = new UserManagementPanel();
@@ -103,7 +106,8 @@ public class MainApplication extends JFrame {
     // ======= CREATE MODERN HEADER =======
     private JPanel createHeader() {
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(HEADER_COLOR);
+        header.setBackground(HEADER_BG);
+        header.setOpaque(true);
         header.setPreferredSize(new Dimension(getWidth(), 70));
         header.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
@@ -112,43 +116,41 @@ public class MainApplication extends JFrame {
 
         // Left side - App title with icon
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        leftPanel.setBackground(HEADER_COLOR);
-        
-        JLabel appIcon = new JLabel("🏪");
-        appIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
-        
-        JLabel title = new JLabel("Restaurant Management");
+        leftPanel.setBackground(HEADER_BG);
+        leftPanel.setOpaque(true);
+
+        JLabel title = new JLabel("Coffee Shop Management");
         title.setFont(TITLE_FONT);
-        title.setForeground(TEXT_PRIMARY);
+        title.setForeground(WHITE);
         title.setBorder(new EmptyBorder(0, 15, 0, 0));
-        
-        leftPanel.add(appIcon);
+
         leftPanel.add(title);
 
         // Right side - Staff info and logout
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        rightPanel.setBackground(HEADER_COLOR);
-        
+        rightPanel.setBackground(HEADER_BG);
+        rightPanel.setOpaque(true);
+
         // Staff info card
         JPanel staffCard = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        staffCard.setBackground(BACKGROUND_COLOR);
+        staffCard.setBackground(WHITE);
         staffCard.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(8, 15, 8, 15)
         ));
-        
-        JLabel staffIcon = new JLabel("👤");
-        staffIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
-        
+
+
         JLabel staffInfo = new JLabel(staffName + " (" + staffRole + ")");
         staffInfo.setFont(MENU_ITEM_FONT);
         staffInfo.setForeground(TEXT_PRIMARY);
-        
-        staffCard.add(staffIcon);
+
+
         staffCard.add(staffInfo);
 
-        // Modern logout button
-        JButton logoutButton = new JButton("🚪 Logout");
+        // Modern logout button (icon + text)
+        JButton logoutButton = new RoundedButton("Logout");
+    // icon removed per user preference
+        util.UIUtils.styleActionButton(logoutButton, 140);
         logoutButton.setFont(MENU_ITEM_FONT);
         logoutButton.setBackground(DANGER_COLOR);
         logoutButton.setForeground(WHITE);
@@ -167,7 +169,7 @@ public class MainApplication extends JFrame {
                 MainApplication.this.dispose();
             }
         });
-        
+
         rightPanel.add(staffCard);
         rightPanel.add(logoutButton);
 
@@ -193,19 +195,6 @@ public class MainApplication extends JFrame {
         menuHeader.setBackground(SIDEBAR_COLOR);
     menuHeader.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         
-        JLabel menuIcon = new JLabel("📋");
-    menuIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
-        
-        JLabel menuTitle = new JLabel("NAVIGATION");
-        menuTitle.setFont(MENU_HEADER_FONT);
-        menuTitle.setForeground(TEXT_SECONDARY);
-    // add left padding to align menu title with menu button content
-    menuTitle.setBorder(new EmptyBorder(0, 16, 0, 0));
-        
-        menuHeader.add(menuIcon);
-        menuHeader.add(menuTitle);
-        sidebar.add(menuHeader);
-    sidebar.add(Box.createRigidArea(new Dimension(0, 12)));
 
             // Add menu buttons
             addMenuButton("Dashboard", "DASHBOARD", sidebar);
@@ -213,6 +202,7 @@ public class MainApplication extends JFrame {
             addMenuButton("Order", "ORDER", sidebar);
             addMenuButton("Order Confirmation", "HISTORY", sidebar);
             addMenuButton("Revenue Today", "REVENUE", sidebar);
+            addMenuButton("Customers", "CUSTOMERS", sidebar);
             
 
         // Add flexible space between main and admin sections to push admin to bottom
@@ -227,15 +217,13 @@ public class MainApplication extends JFrame {
             adminHeader.setBackground(SIDEBAR_COLOR);
             adminHeader.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
             
-            JLabel adminIcon = new JLabel("⚙️");
-            adminIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+
             
             JLabel adminTitle = new JLabel("ADMIN");
             adminTitle.setFont(MENU_HEADER_FONT);
             adminTitle.setForeground(PRIMARY_COLOR);
             adminTitle.setBorder(new EmptyBorder(0, 16, 0, 0));
             
-            adminHeader.add(adminIcon);
             adminHeader.add(adminTitle);
             sidebar.add(adminHeader);
             sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -249,7 +237,9 @@ public class MainApplication extends JFrame {
 
     // ======= CREATE AND ADD MODERN MENU BUTTON =======
     private void addMenuButton(String label, String panelName, JPanel sidebar) {
-        JButton menuButton = new JButton(label);
+    JButton menuButton = new RoundedButton(label);
+        // menu icons removed per user preference
+    // menu icons removed per user preference
         menuButton.setFont(MENU_ITEM_FONT);
         menuButton.setBackground(WHITE);
         menuButton.setForeground(TEXT_PRIMARY);

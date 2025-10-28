@@ -20,16 +20,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import dao.OrderDao;
-import model.Order;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class RevenueReportPanel extends JPanel {
 
-    private final OrderDao orderDao = new OrderDao();
     private JTable table;
     private DefaultTableModel tableModel;
     private JTextField fromDateField;
@@ -42,7 +42,7 @@ public class RevenueReportPanel extends JPanel {
     private static final java.awt.Color PRIMARY_COLOR = new java.awt.Color(33, 150, 243);      // Blue
     private static final java.awt.Color SUCCESS_COLOR = new java.awt.Color(76, 175, 80);       // Green
     private static final java.awt.Color WARNING_COLOR = new java.awt.Color(255, 152, 0);       // Orange
-    private static final java.awt.Color BACKGROUND_COLOR = new java.awt.Color(250, 250, 250);  // Light Gray
+    private static final java.awt.Color BACKGROUND_COLOR = new java.awt.Color(240, 242, 245);  // Gray tinted white
     private static final java.awt.Color CARD_COLOR = java.awt.Color.WHITE;
     private static final java.awt.Color TEXT_PRIMARY = new java.awt.Color(33, 33, 33);
     private static final java.awt.Color TEXT_SECONDARY = new java.awt.Color(117, 117, 117);
@@ -394,7 +394,7 @@ public class RevenueReportPanel extends JPanel {
     }
 
     private JScrollPane createModernTable() {
-        tableModel = new DefaultTableModel(new Object[]{"Order ID", "Date & Time", "Customer", "Staff", "Amount", "Tax", "Discount"}, 0) {
+        tableModel = new DefaultTableModel(new Object[]{"Order ID", "Date & Time", "Customer Name", "Phone", "Table", "Amount", "Discount", "Total"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { 
                 return false; 
@@ -409,6 +409,20 @@ public class RevenueReportPanel extends JPanel {
         table.setGridColor(new java.awt.Color(240, 240, 240));
         table.setShowGrid(true);
         table.setIntercellSpacing(new Dimension(1, 1));
+        
+        // Add double-click listener to show order details
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = table.getSelectedRow();
+                    if (row >= 0) {
+                        int orderId = (int) tableModel.getValueAt(row, 0);
+                        showOrderDetails(orderId);
+                    }
+                }
+            }
+        });
         
         // Modern table header
         JTableHeader header = table.getTableHeader();
@@ -433,8 +447,8 @@ public class RevenueReportPanel extends JPanel {
                     }
                 }
                 
-                // Format currency columns
-                if ((column == 4 || column == 5 || column == 6) && value instanceof Number) {
+                // Format currency columns (Amount, Discount, Total)
+                if ((column == 5 || column == 6 || column == 7) && value instanceof Number) {
                     setText(String.format("%,.0f VND", ((Number) value).doubleValue()));
                     setHorizontalAlignment(SwingConstants.RIGHT);
                     setForeground(SUCCESS_COLOR);
@@ -457,11 +471,12 @@ public class RevenueReportPanel extends JPanel {
         // Set column widths
         table.getColumnModel().getColumn(0).setPreferredWidth(80);   // Order ID
         table.getColumnModel().getColumn(1).setPreferredWidth(150);  // Date & Time
-        table.getColumnModel().getColumn(2).setPreferredWidth(100);  // Customer
-        table.getColumnModel().getColumn(3).setPreferredWidth(100);  // Staff
-        table.getColumnModel().getColumn(4).setPreferredWidth(120);  // Amount
-        table.getColumnModel().getColumn(5).setPreferredWidth(80);   // Tax
-        table.getColumnModel().getColumn(6).setPreferredWidth(80);   // Discount
+        table.getColumnModel().getColumn(2).setPreferredWidth(150);  // Customer Name
+        table.getColumnModel().getColumn(3).setPreferredWidth(120);  // Phone
+        table.getColumnModel().getColumn(4).setPreferredWidth(80);   // Table
+        table.getColumnModel().getColumn(5).setPreferredWidth(120);  // Amount
+        table.getColumnModel().getColumn(6).setPreferredWidth(100);  // Discount
+        table.getColumnModel().getColumn(7).setPreferredWidth(120);  // Total
         
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createLineBorder(new java.awt.Color(224, 224, 224), 1));
@@ -497,7 +512,8 @@ public class RevenueReportPanel extends JPanel {
     }
 
     private JButton createModernButton(String text, java.awt.Color bgColor, java.awt.Color textColor) {
-        JButton button = new JButton(text);
+    JButton button = new RoundedButton(text);
+    util.UIUtils.styleActionButton(button, 120);
         button.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
         button.setBackground(bgColor);
         button.setForeground(textColor);
@@ -528,31 +544,64 @@ public class RevenueReportPanel extends JPanel {
             LocalDateTime start = from.atStartOfDay();
             LocalDateTime end = to.atTime(LocalTime.MAX);
 
-            List<Order> orders = orderDao.listOrders(start, end);
-            double totalRevenue = orderDao.getTotalRevenue(start, end);
-            int totalOrders = orders.size();
-            double avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
+            // Query from app_order table with customer information
+            Connection conn = database.DatabaseConnector.getConnection();
+            String sql = "SELECT ao.order_id, ao.order_date, ao.shipping_name, ao.shipping_phone, " +
+                        "ao.table_number, ao.total_amount, ao.discount, ao.total " +
+                        "FROM app_order ao " +
+                        "WHERE ao.order_date BETWEEN ? AND ? " +
+                        "ORDER BY ao.order_date DESC";
+            
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setTimestamp(1, java.sql.Timestamp.valueOf(start));
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(end));
+            ResultSet rs = ps.executeQuery();
+            
             // Update table
             tableModel.setRowCount(0);
             DateTimeFormatter dtFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            for (Order o : orders) {
+            double totalRevenue = 0;
+            int totalOrders = 0;
+            
+            while (rs.next()) {
+                int orderId = rs.getInt("order_id");
+                java.sql.Timestamp orderDate = rs.getTimestamp("order_date");
+                String customerName = rs.getString("shipping_name");
+                String customerPhone = rs.getString("shipping_phone");
+                String tableNumber = rs.getString("table_number");
+                double amount = rs.getDouble("total_amount");
+                double discount = rs.getDouble("discount");
+                double total = rs.getDouble("total");
+                
                 tableModel.addRow(new Object[]{
-                        o.getOrderId(),
-                        o.getOrderDate() != null ? o.getOrderDate().format(dtFmt) : "",
-                        o.getCustomerId(),
-                        o.getStaffId(),
-                        o.getTotalAmount(),
-                        o.getTax(),
-                        o.getDiscount()
+                    orderId,
+                    orderDate != null ? orderDate.toLocalDateTime().format(dtFmt) : "",
+                    customerName != null ? customerName : "N/A",
+                    customerPhone != null ? customerPhone : "N/A",
+                    tableNumber != null ? tableNumber : "N/A",
+                    amount,
+                    discount,
+                    total
                 });
+                
+                totalRevenue += total;
+                totalOrders++;
             }
+            
+            rs.close();
+            ps.close();
+            conn.close();
+            
+            double avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
             
             // Update statistics
             totalRevenueLabel.setText(String.format("%,.0f VND", totalRevenue));
             totalOrdersLabel.setText(String.valueOf(totalOrders));
             avgOrderLabel.setText(String.format("%,.0f VND", avgOrder));
             
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            showModernDialog("Database error: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             showModernDialog("Invalid date format. Please use yyyy-MM-dd format.", "Date Format Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -616,7 +665,7 @@ public class RevenueReportPanel extends JPanel {
 
             // Header row
             Row header = sheet.createRow(0);
-            String[] columns = {"Order ID", "Date & Time", "Customer", "Staff", "Amount", "Tax", "Discount"};
+            String[] columns = {"Order ID", "Date & Time", "Customer Name", "Phone", "Table", "Amount", "Discount", "Total"};
             for (int i = 0; i < columns.length; i++) {
                 Cell c = header.createCell(i);
                 c.setCellValue(columns[i]);
@@ -663,6 +712,182 @@ public class RevenueReportPanel extends JPanel {
 
     private void showModernDialog(String message, String title, int messageType) {
         JOptionPane.showMessageDialog(this, message, title, messageType);
+    }
+    
+    // Show order details in a dialog
+    private void showOrderDetails(int orderId) {
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            
+            // Get order information
+            String orderSql = "SELECT ao.order_id, ao.order_date, ao.shipping_name, ao.shipping_phone, " +
+                            "ao.shipping_email, ao.table_number, ao.total_amount, ao.discount, ao.total " +
+                            "FROM app_order ao WHERE ao.order_id = ?";
+            PreparedStatement psOrder = conn.prepareStatement(orderSql);
+            psOrder.setInt(1, orderId);
+            ResultSet rsOrder = psOrder.executeQuery();
+            
+            if (!rsOrder.next()) {
+                showModernDialog("Order not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                rsOrder.close();
+                psOrder.close();
+                conn.close();
+                return;
+            }
+            
+            // Get order details
+            String customerName = rsOrder.getString("shipping_name");
+            String customerPhone = rsOrder.getString("shipping_phone");
+            String customerEmail = rsOrder.getString("shipping_email");
+            String tableNumber = rsOrder.getString("table_number");
+            double totalAmount = rsOrder.getDouble("total_amount");
+            double discount = rsOrder.getDouble("discount");
+            double total = rsOrder.getDouble("total");
+            java.sql.Timestamp orderDate = rsOrder.getTimestamp("order_date");
+            
+            rsOrder.close();
+            psOrder.close();
+            
+            // Get order items
+            String itemsSql = "SELECT p.name, od.quantity, od.price, (od.quantity * od.price) as subtotal " +
+                            "FROM app_order_details od " +
+                            "JOIN products p ON od.product_id = p.id " +
+                            "WHERE od.order_id = ?";
+            PreparedStatement psItems = conn.prepareStatement(itemsSql);
+            psItems.setInt(1, orderId);
+            ResultSet rsItems = psItems.executeQuery();
+            
+            // Build dialog content
+            JDialog dialog = new JDialog((java.awt.Frame) SwingUtilities.getWindowAncestor(this), "Order Details #" + orderId, true);
+            dialog.setLayout(new BorderLayout(15, 15));
+            dialog.setSize(700, 600);
+            dialog.setLocationRelativeTo(this);
+            
+            // Header panel with order info
+            JPanel headerPanel = new JPanel();
+            headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+            headerPanel.setBackground(CARD_COLOR);
+            headerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+            
+            JLabel titleLabel = new JLabel("Order #" + orderId);
+            titleLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 24));
+            titleLabel.setForeground(PRIMARY_COLOR);
+            
+            DateTimeFormatter dtFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            JLabel dateLabel = new JLabel("Date: " + (orderDate != null ? orderDate.toLocalDateTime().format(dtFmt) : "N/A"));
+            dateLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+            dateLabel.setForeground(TEXT_SECONDARY);
+            
+            JLabel customerLabel = new JLabel("Customer: " + (customerName != null ? customerName : "N/A"));
+            customerLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+            
+            JLabel phoneLabel = new JLabel("Phone: " + (customerPhone != null ? customerPhone : "N/A"));
+            phoneLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+            
+            JLabel emailLabel = new JLabel("Email: " + (customerEmail != null ? customerEmail : "N/A"));
+            emailLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+            
+            JLabel tableLabel = new JLabel("Table: " + (tableNumber != null ? tableNumber : "N/A"));
+            tableLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+            
+            headerPanel.add(titleLabel);
+            headerPanel.add(Box.createVerticalStrut(10));
+            headerPanel.add(dateLabel);
+            headerPanel.add(Box.createVerticalStrut(10));
+            headerPanel.add(customerLabel);
+            headerPanel.add(phoneLabel);
+            headerPanel.add(emailLabel);
+            headerPanel.add(tableLabel);
+            
+            // Items table
+            String[] columnNames = {"Product", "Quantity", "Unit Price", "Subtotal"};
+            DefaultTableModel itemsModel = new DefaultTableModel(columnNames, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+            
+            while (rsItems.next()) {
+                String productName = rsItems.getString("name");
+                int quantity = rsItems.getInt("quantity");
+                double price = rsItems.getDouble("price");
+                double subtotal = rsItems.getDouble("subtotal");
+                
+                itemsModel.addRow(new Object[]{
+                    productName,
+                    quantity,
+                    String.format("%,.0f VND", price),
+                    String.format("%,.0f VND", subtotal)
+                });
+            }
+            
+            rsItems.close();
+            psItems.close();
+            conn.close();
+            
+            JTable itemsTable = new JTable(itemsModel);
+            itemsTable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
+            itemsTable.setRowHeight(30);
+            itemsTable.setGridColor(new java.awt.Color(240, 240, 240));
+            
+            JScrollPane scrollPane = new JScrollPane(itemsTable);
+            scrollPane.setBorder(BorderFactory.createTitledBorder("Order Items"));
+            
+            // Footer panel with totals
+            JPanel footerPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+            footerPanel.setBackground(CARD_COLOR);
+            footerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+            
+            JLabel amountLbl = new JLabel("Total Amount:");
+            amountLbl.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+            JLabel amountVal = new JLabel(String.format("%,.0f VND", totalAmount));
+            amountVal.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+            amountVal.setHorizontalAlignment(SwingConstants.RIGHT);
+            
+            JLabel discountLbl = new JLabel("Discount:");
+            discountLbl.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+            JLabel discountVal = new JLabel(String.format("-%,.0f VND", discount));
+            discountVal.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+            discountVal.setForeground(WARNING_COLOR);
+            discountVal.setHorizontalAlignment(SwingConstants.RIGHT);
+            
+            JLabel totalLbl = new JLabel("Total:");
+            totalLbl.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+            JLabel totalVal = new JLabel(String.format("%,.0f VND", total));
+            totalVal.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+            totalVal.setForeground(SUCCESS_COLOR);
+            totalVal.setHorizontalAlignment(SwingConstants.RIGHT);
+            
+            footerPanel.add(amountLbl);
+            footerPanel.add(amountVal);
+            footerPanel.add(discountLbl);
+            footerPanel.add(discountVal);
+            footerPanel.add(totalLbl);
+            footerPanel.add(totalVal);
+            
+            // Close button
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            buttonPanel.setBackground(CARD_COLOR);
+            JButton closeBtn = createModernButton("Close", PRIMARY_COLOR, java.awt.Color.WHITE);
+            closeBtn.addActionListener(evt -> dialog.dispose());
+            buttonPanel.add(closeBtn);
+            
+            // Add all panels to dialog
+            dialog.add(headerPanel, BorderLayout.NORTH);
+            dialog.add(scrollPane, BorderLayout.CENTER);
+            
+            JPanel southPanel = new JPanel(new BorderLayout());
+            southPanel.add(footerPanel, BorderLayout.CENTER);
+            southPanel.add(buttonPanel, BorderLayout.SOUTH);
+            dialog.add(southPanel, BorderLayout.SOUTH);
+            
+            dialog.setVisible(true);
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            showModernDialog("Error loading order details: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
 

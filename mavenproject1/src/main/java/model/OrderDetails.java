@@ -1,7 +1,6 @@
 package model;
 
 public class OrderDetails {
-    private int id; // optional if needed
     private int orderId;
     private int productId;
     private int quantity;

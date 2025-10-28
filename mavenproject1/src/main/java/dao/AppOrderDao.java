@@ -15,7 +15,7 @@ public class AppOrderDao {
         PreparedStatement psUpdateStock = null;
         ResultSet rs = null;
 
-        String sqlOrder = "INSERT INTO app_order (customer_id, user_id, order_date, total_amount, tax, discount, total, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')";
+        String sqlOrder = "INSERT INTO app_order (customer_id, user_id, order_date, total_amount, tax, discount, total, status, shipping_name, shipping_phone, shipping_email, table_number) VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)";
         String sqlDetail = "INSERT INTO app_order_details (order_id, product_id, quantity, price) VALUES (?, (SELECT id FROM products WHERE name=?), ?, ?)";
         String sqlUpdateStock = "UPDATE products SET stock = stock - ? WHERE name = ?";
 
@@ -37,11 +37,19 @@ public class AppOrderDao {
             psOrder.setDouble(5, order.getTax());
             psOrder.setDouble(6, order.getDiscount());
             psOrder.setDouble(7, order.getTotalAmount());
+            psOrder.setString(8, order.getShippingName());
+            psOrder.setString(9, order.getShippingPhone());
+            psOrder.setString(10, order.getShippingEmail());
+            psOrder.setString(11, order.getTableNumber());
             
             System.out.println("SQL App Order: " + sqlOrder);
             System.out.println("Customer ID: " + order.getCustomerId());
             System.out.println("Staff ID: " + order.getStaffId());
             System.out.println("Total Amount: " + order.getTotalAmount());
+            System.out.println("Shipping Name: " + order.getShippingName());
+            System.out.println("Shipping Phone: " + order.getShippingPhone());
+            System.out.println("Shipping Email: " + order.getShippingEmail());
+            System.out.println("Table Number: " + order.getTableNumber());
             
             int orderResult = psOrder.executeUpdate();
             System.out.println("App order insert result: " + orderResult);

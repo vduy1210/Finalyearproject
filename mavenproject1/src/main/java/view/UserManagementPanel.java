@@ -28,7 +28,7 @@ public class UserManagementPanel extends JPanel {
     private static final Color SECONDARY_COLOR = new Color(255, 193, 7);     // Amber
     private static final Color SUCCESS_COLOR = new Color(76, 175, 80);       // Green
     private static final Color ERROR_COLOR = new Color(244, 67, 54);         // Red
-    private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);  // Light Gray
+    private static final Color BACKGROUND_COLOR = new Color(240, 242, 245);  // Gray tinted white
     private static final Color CARD_COLOR = Color.WHITE;
     private static final Color TEXT_PRIMARY = new Color(33, 33, 33);
     private static final Color TEXT_SECONDARY = new Color(117, 117, 117);
@@ -86,8 +86,9 @@ public class UserManagementPanel extends JPanel {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         searchPanel.setBackground(BACKGROUND_COLOR);
         
-        JLabel searchLabel = new JLabel("🔍");
-        searchLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
+        JLabel searchLabel = new JLabel("Search:");
+        searchLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        searchLabel.setForeground(TEXT_SECONDARY);
         
         searchField = new JTextField(20);
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -105,8 +106,8 @@ public class UserManagementPanel extends JPanel {
             }
         });
         
-        JButton refreshBtn = createModernButton("🔄 Refresh", PRIMARY_COLOR, Color.WHITE);
-        refreshBtn.addActionListener(evt -> reloadTable());
+        JButton refreshBtn = createModernButton("Refresh", PRIMARY_COLOR, Color.WHITE);
+    refreshBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(java.awt.event.ActionEvent evt) { reloadTable(); } });
         
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
@@ -223,7 +224,7 @@ public class UserManagementPanel extends JPanel {
         userTable.getColumnModel().getColumn(3).setPreferredWidth(80);   // Role
         userTable.getColumnModel().getColumn(4).setPreferredWidth(80);   // Status
         
-        userTable.getSelectionModel().addListSelectionListener(evt -> fillFormFromSelection());
+    userTable.getSelectionModel().addListSelectionListener(new javax.swing.event.ListSelectionListener() { public void valueChanged(javax.swing.event.ListSelectionEvent evt) { fillFormFromSelection(); } });
         
         // Add double-click to edit
         userTable.addMouseListener(new MouseAdapter() {
@@ -273,13 +274,13 @@ public class UserManagementPanel extends JPanel {
         formCard.add(Box.createVerticalStrut(25));
         
         // Form fields
-        formCard.add(createFormField("👤 Username", usernameField = new JTextField()));
+        formCard.add(createFormField("Username", usernameField = new JTextField()));
         formCard.add(Box.createVerticalStrut(15));
-        formCard.add(createFormField("🔒 Password", passwordField = new JPasswordField()));
+        formCard.add(createFormField("Password", passwordField = new JPasswordField()));
         formCard.add(Box.createVerticalStrut(15));
-        formCard.add(createFormField("📧 Email", emailField = new JTextField()));
+        formCard.add(createFormField("Email", emailField = new JTextField()));
         formCard.add(Box.createVerticalStrut(15));
-        formCard.add(createFormField("👔 Role", roleCombo = new JComboBox<>(new String[]{"staff", "admin"})));
+        formCard.add(createFormField("Role", roleCombo = new JComboBox<>(new String[]{"staff", "admin"})));
         
         formCard.add(Box.createVerticalStrut(30));
         
@@ -302,10 +303,12 @@ public class UserManagementPanel extends JPanel {
         fieldLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
         fieldLabel.setForeground(TEXT_PRIMARY);
         fieldLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        fieldLabel.setHorizontalAlignment(SwingConstants.LEFT);
         
         field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         field.setPreferredSize(new Dimension(0, 35));
+        field.setAlignmentX(Component.LEFT_ALIGNMENT);
         field.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(224, 224, 224), 1),
             new EmptyBorder(8, 12, 8, 12)
@@ -327,15 +330,15 @@ public class UserManagementPanel extends JPanel {
         buttonPanel.setBackground(CARD_COLOR);
         buttonPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         
-        JButton addBtn = createModernButton("➕ Add", SUCCESS_COLOR, Color.WHITE);
-        JButton updateBtn = createModernButton("✏️ Update", SECONDARY_COLOR, Color.WHITE);
-        JButton deleteBtn = createModernButton("🗑️ Delete", ERROR_COLOR, Color.WHITE);
-        JButton clearBtn = createModernButton("🧹 Clear", new Color(158, 158, 158), Color.WHITE);
+        JButton addBtn = createModernButton("Add", SUCCESS_COLOR, Color.WHITE);
+        JButton updateBtn = createModernButton("Update", SECONDARY_COLOR, Color.WHITE);
+        JButton deleteBtn = createModernButton("Delete", ERROR_COLOR, Color.WHITE);
+        JButton clearBtn = createModernButton("Clear", new Color(158, 158, 158), Color.WHITE);
         
-        addBtn.addActionListener(evt -> handleAdd());
-        updateBtn.addActionListener(evt -> handleUpdate());
-        deleteBtn.addActionListener(evt -> handleDelete());
-        clearBtn.addActionListener(evt -> clearForm());
+    addBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(java.awt.event.ActionEvent evt) { handleAdd(); } });
+    updateBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(java.awt.event.ActionEvent evt) { handleUpdate(); } });
+    deleteBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(java.awt.event.ActionEvent evt) { handleDelete(); } });
+    clearBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(java.awt.event.ActionEvent evt) { clearForm(); } });
         
         buttonPanel.add(addBtn);
         buttonPanel.add(updateBtn);
@@ -346,7 +349,7 @@ public class UserManagementPanel extends JPanel {
     }
 
     private JButton createModernButton(String text, Color bgColor, Color textColor) {
-        JButton button = new JButton(text);
+    JButton button = new RoundedButton(text);
         button.setFont(new Font("Segoe UI", Font.BOLD, 12));
         button.setBackground(bgColor);
         button.setForeground(textColor);

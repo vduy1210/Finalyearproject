@@ -21,7 +21,7 @@ import java.util.List;
 public class ProductManagerPanel extends JPanel {
 
     // Colors and fonts aligned with the modern app style
-    private static final Color COLOR_BACKGROUND = new Color(245, 247, 251); // light app background
+    private static final Color COLOR_BACKGROUND = new Color(240, 242, 245); // Gray tinted white
     private static final Color COLOR_CARD = Color.WHITE;
     private static final Color COLOR_PRIMARY = new Color(52, 152, 219);
     private static final Color COLOR_TEXT = new Color(33, 37, 41);
@@ -269,7 +269,8 @@ public class ProductManagerPanel extends JPanel {
     }
 
     private JButton baseButton(String text) {
-        JButton button = new JButton(text);
+    JButton button = new RoundedButton(text);
+    util.UIUtils.styleActionButton(button, 140);
         button.setFont(FONT_BUTTON);
         button.setFocusPainted(false);
     button.setBorder(BorderFactory.createCompoundBorder(

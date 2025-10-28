@@ -8,6 +8,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 // Charts
 import org.jfree.chart.ChartFactory;
@@ -24,7 +27,7 @@ public class DashboardPanel extends JPanel {
     private static final Color SUCCESS_COLOR = new Color(76, 175, 80);        // Green
     private static final Color WARNING_COLOR = new Color(255, 152, 0);        // Orange
     private static final Color INFO_COLOR = new Color(156, 39, 176);          // Purple
-    private static final Color BACKGROUND_COLOR = new Color(248, 250, 252);   // Light Blue Gray
+    private static final Color BACKGROUND_COLOR = new Color(240, 242, 245);   // Gray tinted white
     private static final Color CARD_COLOR = Color.WHITE;
     private static final Color TEXT_PRIMARY = new Color(33, 33, 33);
     private static final Color TEXT_SECONDARY = new Color(117, 117, 117);
@@ -135,19 +138,16 @@ public class DashboardPanel extends JPanel {
         JPanel chartsPanel = new JPanel(new BorderLayout(20, 0));
         chartsPanel.setBackground(BACKGROUND_COLOR);
         
-        // Main chart area (left side)
-        JPanel leftPanel = new JPanel(new BorderLayout(0, 20));
+        // Main chart area (left side) - Top 5 products
+        JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setBackground(BACKGROUND_COLOR);
+        leftPanel.add(createTop5ProductsChartCard(), BorderLayout.CENTER);
         
-    leftPanel.add(createSalesChartCard(), BorderLayout.NORTH);
-    leftPanel.add(createCustomerActivityChartCard(), BorderLayout.CENTER);
-    leftPanel.add(createWeeklyJointChartCard(), BorderLayout.SOUTH);
-        
-        // Right side panel
-        JPanel rightPanel = new JPanel();
+        // Right side panel - Top customers this month
+        JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBackground(BACKGROUND_COLOR);
-        rightPanel.setPreferredSize(new Dimension(350, 0));
-    rightPanel.add(createBestSellersChartCard());
+        rightPanel.setPreferredSize(new Dimension(400, 0));
+        rightPanel.add(createTopCustomersCard(), BorderLayout.CENTER);
         
         chartsPanel.add(leftPanel, BorderLayout.CENTER);
         chartsPanel.add(rightPanel, BorderLayout.EAST);
@@ -316,6 +316,24 @@ public class DashboardPanel extends JPanel {
         }
         return cards;
     }
+    
+    // Helper method to find component by client property recursively
+    private <T> T findComponentByProperty(Container root, String propertyName, Class<T> type) {
+        for (Component c : root.getComponents()) {
+            if (c instanceof JComponent) {
+                JComponent jc = (JComponent) c;
+                Object prop = jc.getClientProperty(propertyName);
+                if (type.isInstance(prop)) {
+                    return type.cast(prop);
+                }
+            }
+            if (c instanceof Container) {
+                T result = findComponentByProperty((Container) c, propertyName, type);
+                if (result != null) return result;
+            }
+        }
+        return null;
+    }
 
     private Component getTitleLabelFromCard(JComponent card) {
         for (Component c : card.getComponents()) {
@@ -406,135 +424,325 @@ public class DashboardPanel extends JPanel {
     }
 
     // --- Chart cards using JFreeChart ---
-    private JPanel createSalesChartCard() {
-        JPanel card = createChartCard("📊 Sales Analytics Today", "Today's sales performance and trends");
+    private JPanel createTop5ProductsChartCard() {
+        JPanel card = createChartCard("📊 Top 5 Best Selling Products", "Top 5 products with highest sales");
+        card.setPreferredSize(new Dimension(0, 500));
         JPanel content = (JPanel) card.getComponent(1);
 
+        // Initial placeholder dataset
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(1200, "Sales", "Mon");
-        dataset.addValue(1500, "Sales", "Tue");
-        dataset.addValue(900,  "Sales", "Wed");
-        dataset.addValue(1800, "Sales", "Thu");
-        dataset.addValue(1600, "Sales", "Fri");
-        dataset.addValue(2000, "Sales", "Sat");
-        dataset.addValue(1700, "Sales", "Sun");
-
-        JFreeChart chart = ChartFactory.createLineChart(
-            null, "Day", "Amount ($)", dataset, PlotOrientation.VERTICAL, false, true, false
-        );
-        ChartPanel cp = new ChartPanel(chart);
-        cp.setMouseWheelEnabled(true);
-        content.add(cp, BorderLayout.CENTER);
-        return card;
-    }
-
-    // New: weekly joint chart (revenue + orders)
-    private JPanel createWeeklyJointChartCard() {
-        JPanel card = createChartCard("📈 Joint Chart This Week", "Revenue and Orders by day (this week)");
-        JPanel content = (JPanel) card.getComponent(1);
-        // placeholder chart
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        JFreeChart chart = ChartFactory.createBarChart(null, "Day", "Value", dataset);
-        ChartPanel cp = new ChartPanel(chart);
-        cp.setMouseWheelEnabled(true);
-        content.setLayout(new BorderLayout());
-        content.add(cp, BorderLayout.CENTER);
-        // store chart panel for later updates
-        card.putClientProperty("jointChartPanel", cp);
-        return card;
-    }
-
-    private JPanel createCustomerActivityChartCard() {
-        JPanel card = createChartCard("👥 Customer Activity Today", "Customer engagement and purchase patterns today");
-        JPanel content = (JPanel) card.getComponent(1);
-
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.addValue(30, "Visits", "Mon");
-        dataset.addValue(45, "Visits", "Tue");
-        dataset.addValue(25, "Visits", "Wed");
-        dataset.addValue(60, "Visits", "Thu");
-        dataset.addValue(55, "Visits", "Fri");
-        dataset.addValue(70, "Visits", "Sat");
-        dataset.addValue(40, "Visits", "Sun");
+        dataset.addValue(0, "Quantity", "Loading...");
 
         JFreeChart chart = ChartFactory.createBarChart(
-            null, "Day", "Visits", dataset, PlotOrientation.VERTICAL, false, true, false
+            null, "Product", "Quantity Sold", dataset, PlotOrientation.VERTICAL, false, true, false
         );
+        
+        // Customize chart appearance
+        org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setRangeGridlinePaint(new Color(200, 200, 200));
+        
+        org.jfree.chart.renderer.category.BarRenderer renderer = (org.jfree.chart.renderer.category.BarRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, PRIMARY_COLOR);
+        renderer.setDrawBarOutline(false);
+        
         ChartPanel cp = new ChartPanel(chart);
         cp.setMouseWheelEnabled(true);
         content.add(cp, BorderLayout.CENTER);
-        // store chart for weekly customers per day update
-        card.putClientProperty("customersChartPanel", cp);
+        
+        // Store chart panel for later updates
+        card.putClientProperty("top5ChartPanel", cp);
+        
         return card;
     }
 
-    // Helper to update weekly charts
+    private JPanel createTopCustomersCard() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(CARD_COLOR);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(224, 224, 224), 1),
+            new EmptyBorder(25, 25, 25, 25)
+        ));
+        
+        // Header
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+        headerPanel.setBackground(CARD_COLOR);
+        headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
+        
+        JLabel titleLabel = new JLabel("👥 Top Customers This Month");
+        titleLabel.setFont(WIDGET_TITLE_FONT);
+        titleLabel.setForeground(TEXT_PRIMARY);
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JLabel subtitleLabel = new JLabel("Customers with highest purchases");
+        subtitleLabel.setFont(SUBTITLE_FONT);
+        subtitleLabel.setForeground(TEXT_SECONDARY);
+        subtitleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        headerPanel.add(titleLabel);
+        headerPanel.add(Box.createVerticalStrut(5));
+        headerPanel.add(subtitleLabel);
+        
+        // Customer list panel
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setBackground(CARD_COLOR);
+        
+        // Store list panel for later updates
+        card.putClientProperty("customerListPanel", listPanel);
+        
+        JScrollPane scrollPane = new JScrollPane(listPanel);
+        scrollPane.setBorder(null);
+        scrollPane.setBackground(CARD_COLOR);
+        scrollPane.getViewport().setBackground(CARD_COLOR);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        card.add(headerPanel, BorderLayout.NORTH);
+        card.add(scrollPane, BorderLayout.CENTER);
+        
+        return card;
+    }
+    
+    private JPanel createCustomerListItem(int rank, String name, String phone, double totalSpent) {
+        JPanel item = new JPanel(new BorderLayout(8, 0));
+        item.setBackground(CARD_COLOR);
+        item.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)),
+            new EmptyBorder(8, 8, 8, 8)  // Reduced padding: 15 -> 8
+        ));
+        item.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60)); // Limit height to 60px
+        
+        // Rank badge
+        JLabel rankLabel = new JLabel("#" + rank);
+        rankLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));  // Smaller font: 16 -> 14
+        rankLabel.setForeground(rank <= 3 ? WARNING_COLOR : TEXT_SECONDARY);
+        rankLabel.setPreferredSize(new Dimension(35, 0));  // Narrower: 40 -> 35
+        
+        // Customer info
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(CARD_COLOR);
+        
+        JLabel nameLabel = new JLabel(name);
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));  // Smaller: 14 -> 13
+        nameLabel.setForeground(TEXT_PRIMARY);
+        nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JLabel phoneLabel = new JLabel(phone);
+        phoneLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));  // Smaller: 12 -> 11
+        phoneLabel.setForeground(TEXT_SECONDARY);
+        phoneLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        infoPanel.add(nameLabel);
+        infoPanel.add(Box.createVerticalStrut(2));  // Smaller gap: 3 -> 2
+        infoPanel.add(phoneLabel);
+        
+        // Amount
+        java.text.NumberFormat currencyFmt = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.of("vi", "VN"));
+        JLabel amountLabel = new JLabel(currencyFmt.format(totalSpent));
+        amountLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));  // Smaller: 14 -> 13
+        amountLabel.setForeground(SUCCESS_COLOR);
+        
+        item.add(rankLabel, BorderLayout.WEST);
+        item.add(infoPanel, BorderLayout.CENTER);
+        item.add(amountLabel, BorderLayout.EAST);
+        
+        return item;
+    }
+
+    // Helper to update charts with real data
     private void refreshWeeklyCharts() {
-        // compute start of current week (Monday) and end (Sunday)
-        java.time.LocalDate today = java.time.LocalDate.now();
-        java.time.DayOfWeek firstDayOfWeek = java.time.DayOfWeek.MONDAY;
-        java.time.LocalDate startOfWeek = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(firstDayOfWeek));
-        java.time.LocalDateTime from = startOfWeek.atStartOfDay();
-        java.time.LocalDateTime to = startOfWeek.plusDays(7).atStartOfDay().minusNanos(1);
-
-        dao.AppOrderDao dao = new dao.AppOrderDao();
-        java.util.Map<java.time.LocalDate, Double> revenueByDay = dao.getRevenueByDay(from, to);
-        java.util.Map<java.time.LocalDate, Long> ordersByDay = dao.getOrderCountByDay(from, to);
-        java.util.Map<java.time.LocalDate, Long> customersByDay = dao.getDistinctCustomerCountByDay(from, to);
-
-        // Prepare datasets
-        DefaultCategoryDataset jointDatasetRevenue = new DefaultCategoryDataset();
-        DefaultCategoryDataset jointDatasetOrders = new DefaultCategoryDataset();
-        DefaultCategoryDataset customersDataset = new DefaultCategoryDataset();
-
-        // Iterate days from startOfWeek to startOfWeek+6
-        for (int i = 0; i < 7; i++) {
-            java.time.LocalDate d = startOfWeek.plusDays(i);
-            String label = d.getDayOfWeek().toString().substring(0,3);
-            double rev = revenueByDay.getOrDefault(d, 0.0);
-            long ord = ordersByDay.getOrDefault(d, 0L);
-            long cust = customersByDay.getOrDefault(d, 0L);
-            jointDatasetRevenue.addValue(rev, "Revenue", label);
-            jointDatasetOrders.addValue(ord, "Orders", label);
-            customersDataset.addValue(cust, "Customers", label);
-        }
-
-        // Update joint chart
-        // find joint chart panel (search in component tree)
-        java.util.List<Component> cards = findStatCards(this);
-        for (Component comp : cards) {
-            if (comp instanceof JComponent) {
-                JComponent jc = (JComponent) comp;
-                Object cpObj = jc.getClientProperty("jointChartPanel");
-                if (cpObj instanceof ChartPanel) {
-                    ChartPanel cp = (ChartPanel) cpObj;
-                    // create combined chart: use Revenue as line dataset and Orders as bar dataset
-                    JFreeChart chart = ChartFactory.createBarChart(null, "Day", "Revenue", jointDatasetRevenue);
-                    cp.setChart(chart);
-                }
-                Object customersObj = jc.getClientProperty("customersChartPanel");
-                if (customersObj instanceof ChartPanel) {
-                    ChartPanel ccp = (ChartPanel) customersObj;
-                    JFreeChart chartCust = ChartFactory.createLineChart(null, "Day", "Customers", customersDataset);
-                    ccp.setChart(chartCust);
-                }
+        // Update Top 5 Products Chart
+        updateTop5ProductsChart();
+        
+        // Update Top Customers List
+        updateTopCustomersList();
+    }
+    
+    private void updateTop5ProductsChart() {
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            
+            // Query to get top 5 products by quantity sold from app_order_details
+            String sql = "SELECT p.name, SUM(od.quantity) as total_qty " +
+                        "FROM app_order_details od " +
+                        "JOIN products p ON od.product_id = p.id " +
+                        "GROUP BY p.id, p.name " +
+                        "ORDER BY total_qty DESC " +
+                        "LIMIT 5";
+            
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            
+            DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+            boolean hasData = false;
+            
+            while (rs.next()) {
+                String productName = rs.getString("name");
+                int quantity = rs.getInt("total_qty");
+                dataset.addValue(quantity, "Quantity", productName);
+                hasData = true;
+                System.out.println("[Dashboard] Product: " + productName + ", Quantity: " + quantity);
             }
+            
+            if (!hasData) {
+                System.out.println("[Dashboard] No product data found!");
+                // Add dummy data for display
+                dataset.addValue(0, "Quantity", "No Data");
+            }
+            
+            rs.close();
+            ps.close();
+            conn.close();
+            
+            // Update chart on EDT
+            SwingUtilities.invokeLater(() -> {
+                System.out.println("[Dashboard] Finding chart panel...");
+                // Use new helper method to find chart panel
+                ChartPanel cp = findComponentByProperty(this, "top5ChartPanel", ChartPanel.class);
+                
+                if (cp != null) {
+                    System.out.println("[Dashboard] Chart panel found! Creating chart...");
+                    JFreeChart chart = ChartFactory.createBarChart(
+                        null, "Product", "Quantity Sold", dataset, 
+                        PlotOrientation.VERTICAL, false, true, false
+                    );
+                    
+                    // Customize chart
+                    org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
+                    plot.setBackgroundPaint(Color.WHITE);
+                    plot.setRangeGridlinePaint(new Color(200, 200, 200));
+                    
+                    org.jfree.chart.renderer.category.BarRenderer renderer = 
+                        (org.jfree.chart.renderer.category.BarRenderer) plot.getRenderer();
+                    renderer.setSeriesPaint(0, PRIMARY_COLOR);
+                    renderer.setDrawBarOutline(false);
+                    
+                    cp.setChart(chart);
+                    cp.repaint();
+                    System.out.println("[Dashboard] Chart updated successfully!");
+                } else {
+                    System.out.println("[Dashboard] ERROR: Chart panel not found!");
+                }
+            });
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("[Dashboard] Error updating top 5 products: " + e.getMessage());
         }
     }
-
-    private JPanel createBestSellersChartCard() {
-        JPanel card = createChartCard("🏆 Best Selling Products", "Top performing products today");
-        JPanel content = (JPanel) card.getComponent(1);
-
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        dataset.setValue("Coffee", 35);
-        dataset.setValue("Tea", 25);
-        dataset.setValue("Snacks", 20);
-        dataset.setValue("Desserts", 20);
-
-        JFreeChart chart = ChartFactory.createPieChart(null, dataset, false, true, false);
-        ChartPanel cp = new ChartPanel(chart);
-        content.add(cp, BorderLayout.CENTER);
-        return card;
+    
+    private void updateTopCustomersList() {
+        try {
+            Connection conn = database.DatabaseConnector.getConnection();
+            
+            // Get start and end of current month
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate startOfMonth = today.withDayOfMonth(1);
+            java.time.LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+            
+            // Query to get top customers by total spending this month from BOTH app_order and web_order
+            // Use UNION ALL to combine results from both tables
+            String sql = "SELECT c.name, c.phone, COALESCE(total_spent, 0) as total_spent FROM customers c " +
+                        "LEFT JOIN ( " +
+                        "  SELECT customer_id, SUM(total) as total_spent " +
+                        "  FROM ( " +
+                        "    SELECT customer_id, total FROM app_order " +
+                        "    WHERE DATE(order_date) >= ? AND DATE(order_date) <= ? " +
+                        "    UNION ALL " +
+                        "    SELECT customer_id, total FROM web_order " +
+                        "    WHERE DATE(order_date) >= ? AND DATE(order_date) <= ? " +
+                        "  ) combined " +
+                        "  WHERE customer_id IS NOT NULL " +
+                        "  GROUP BY customer_id " +
+                        ") orders ON c.id = orders.customer_id " +
+                        "WHERE total_spent > 0 " +
+                        "ORDER BY total_spent DESC " +
+                        "LIMIT 10";
+            
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, startOfMonth.toString());
+            ps.setString(2, endOfMonth.toString());
+            ps.setString(3, startOfMonth.toString());
+            ps.setString(4, endOfMonth.toString());
+            ResultSet rs = ps.executeQuery();
+            
+            java.util.List<CustomerData> customers = new java.util.ArrayList<>();
+            while (rs.next()) {
+                String name = rs.getString("name");
+                String phone = rs.getString("phone");
+                double totalSpent = rs.getDouble("total_spent");
+                customers.add(new CustomerData(name, phone, totalSpent));
+                System.out.println("[Dashboard] Customer: " + name + ", Phone: " + phone + ", Spent: " + totalSpent);
+            }
+            
+            if (customers.isEmpty()) {
+                System.out.println("[Dashboard] No customer data found for this month!");
+            }
+            
+            rs.close();
+            ps.close();
+            conn.close();
+            
+            // Update UI on EDT
+            SwingUtilities.invokeLater(() -> {
+                System.out.println("[Dashboard] Updating customer list UI...");
+                // Use new helper method to find customer list panel
+                JPanel listPanel = findComponentByProperty(this, "customerListPanel", JPanel.class);
+                
+                if (listPanel != null) {
+                    System.out.println("[Dashboard] Customer list panel found!");
+                    listPanel.removeAll();
+                    
+                    if (customers.isEmpty()) {
+                        JLabel emptyLabel = new JLabel("No data available");
+                        emptyLabel.setFont(SUBTITLE_FONT);
+                        emptyLabel.setForeground(TEXT_SECONDARY);
+                        emptyLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        listPanel.add(emptyLabel);
+                        System.out.println("[Dashboard] Added 'No data' label");
+                    } else {
+                        System.out.println("[Dashboard] Adding " + customers.size() + " customers to list");
+                        int rank = 1;
+                        for (CustomerData customer : customers) {
+                            JPanel item = createCustomerListItem(
+                                rank++, 
+                                customer.name, 
+                                customer.phone, 
+                                customer.totalSpent
+                            );
+                            listPanel.add(item);
+                        }
+                        // Add glue to push items to the top and leave empty space below
+                        listPanel.add(Box.createVerticalGlue());
+                    }
+                    
+                    listPanel.revalidate();
+                    listPanel.repaint();
+                    System.out.println("[Dashboard] Customer list updated successfully!");
+                } else {
+                    System.out.println("[Dashboard] ERROR: Customer list panel not found!");
+                }
+            });
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("[Dashboard] Error updating top customers: " + e.getMessage());
+        }
+    }
+    
+    // Helper class to store customer data
+    private static class CustomerData {
+        String name;
+        String phone;
+        double totalSpent;
+        
+        CustomerData(String name, String phone, double totalSpent) {
+            this.name = name;
+            this.phone = phone;
+            this.totalSpent = totalSpent;
+        }
     }
 }

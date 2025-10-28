@@ -22,12 +22,11 @@ public class LoginForm extends JFrame {
     // Slightly smaller header to match prior size
     private static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 30);
     private static final Font SUBTITLE_FONT = new Font("Segoe UI", Font.PLAIN, 16);
-    private static final Font LABEL_FONT = new Font("Segoe UI", Font.BOLD, 15);
     private static final Font INPUT_FONT = new Font("Segoe UI", Font.PLAIN, 15);
     private static final Font BUTTON_FONT = new Font("Segoe UI", Font.BOLD, 16);
     private static final Font BRAND_TITLE_FONT = new Font("Segoe UI", Font.BOLD, 30);
     private static final Font BRAND_DESC_FONT = new Font("Segoe UI", Font.PLAIN, 17);
-    private static final Font FEATURE_FONT = new Font("Segoe UI", Font.PLAIN, 16);
+    // removed unused FONT constants
 
     private JTextField usernameField;
     private JPasswordField passwordField;
@@ -149,24 +148,24 @@ public class LoginForm extends JFrame {
     // Left align like the reference image
     loginSubtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Username field - Add simple user icon like in image
-        JLabel usernameLabel = new JLabel("🧑 Username");
-        usernameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        usernameLabel.setForeground(new Color(50, 50, 50));
+        // Username field
+        JLabel usernameLabel = new JLabel("Username");
+        usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        usernameLabel.setForeground(TEXT_PRIMARY);
         usernameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         usernameField = createCleanTextField("");
         
-        // Password field - Add simple lock icon like in image
-        JLabel passwordLabel = new JLabel("🔒 Password");
-        passwordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        passwordLabel.setForeground(new Color(50, 50, 50));
+        // Password field
+        JLabel passwordLabel = new JLabel("Password");
+        passwordLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        passwordLabel.setForeground(TEXT_PRIMARY);
         passwordLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         passwordField = createCleanPasswordField("Enter your password");
         
-        // Login button - Add login icon like in image
-    JButton loginButton = createCleanButton("🔓 Sign In", PRIMARY_COLOR, Color.WHITE);
+        // Login button
+    JButton loginButton = createCleanButton("Sign In", PRIMARY_COLOR, Color.WHITE);
     // Left align so the button lines up with input fields
     loginButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         
@@ -178,7 +177,8 @@ public class LoginForm extends JFrame {
         registerText.setFont(INPUT_FONT);
         registerText.setForeground(TEXT_SECONDARY);
         
-        JButton registerLink = new JButton("Create Account");
+    JButton registerLink = new RoundedButton("Create Account");
+    util.UIUtils.styleActionButton(registerLink, 140);
         registerLink.setFont(new Font("Segoe UI", Font.BOLD, 15));
         registerLink.setForeground(PRIMARY_COLOR);
         registerLink.setBorder(null);
@@ -299,7 +299,7 @@ public class LoginForm extends JFrame {
     }
 
     private JButton createCleanButton(String text, Color bgColor, Color textColor) {
-        JButton button = new JButton(text);
+    JButton button = new RoundedButton(text);
         button.setFont(BUTTON_FONT);
         button.setBackground(bgColor);
         button.setForeground(textColor);
@@ -327,9 +327,10 @@ public class LoginForm extends JFrame {
     private void setupEventHandlers(JButton loginButton) {
         UserDAO userDao = new UserDAO();
         
-        loginButton.addActionListener(e -> {
-            String usernameText = usernameField.getText().trim();
-            String passwordText = new String(passwordField.getPassword());
+        loginButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                String usernameText = usernameField.getText().trim();
+                String passwordText = new String(passwordField.getPassword());
             
             // Clear placeholder text for validation
             if (passwordText.equals("Enter your password")) passwordText = "";
@@ -352,6 +353,7 @@ public class LoginForm extends JFrame {
                 dispose();
             } else {
                 showModernDialog("Invalid username or password.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+            }
             }
         });
         
