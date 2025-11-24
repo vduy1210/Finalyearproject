@@ -191,7 +191,7 @@ function Navbar({ setUserName }) {
         {loggedIn ? (
           <button onClick={handleLogout} style={buttonStyle}>Logout</button>
         ) : (
-          <Link to="/login" style={{ ...linkStyle, ...(hoverIdxMobile === 3 ? linkHover : {}) }} onMouseEnter={() => setHoverIdxMobile(3)} onMouseLeave={() => setHoverIdxMobile(-1)} onClick={() => setOpen(false)}>Login</Link>
+          <Link to="/login" style={{ ...linkStyle, ...(hoverIdxMobile === 3 ? linkHover : {}) }} onMouseEnter={() => setHoverIdxMobile(3)} onMouseLeave={() => setHoverIdxMobile(-1)} onClick={() => setOpen(false)}>Staff Access</Link>
         )}
       </nav>
       {/* Navbar ngang cho desktop/tablet */}
@@ -219,7 +219,7 @@ function Navbar({ setUserName }) {
               </button>
             ) : (
               <Link to="/login" style={{ ...linkStyleDesktop, ...(hoverIdx === 3 ? linkHover : {}) }} onMouseEnter={() => setHoverIdx(3)} onMouseLeave={() => setHoverIdx(-1)}>
-                Login
+                Staff Access
               </Link>
             )}
           </li>

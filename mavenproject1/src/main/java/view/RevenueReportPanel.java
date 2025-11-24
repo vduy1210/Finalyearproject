@@ -870,7 +870,7 @@ public class RevenueReportPanel extends JPanel {
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
             buttonPanel.setBackground(CARD_COLOR);
             JButton closeBtn = createModernButton("Close", PRIMARY_COLOR, java.awt.Color.WHITE);
-            closeBtn.addActionListener(evt -> dialog.dispose());
+            closeBtn.addActionListener(_ -> dialog.dispose());
             buttonPanel.add(closeBtn);
             
             // Add all panels to dialog

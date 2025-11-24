@@ -263,8 +263,6 @@ public class CustomerManagementPanel extends JPanel {
             // Count tier distribution
             int platinumCount = 0;
             int goldCount = 0;
-            int silverCount = 0;
-            int bronzeCount = 0;
             
             String tierSql = "SELECT accumulatedPoint FROM customers";
             PreparedStatement psTier = conn.prepareStatement(tierSql);
@@ -274,8 +272,6 @@ public class CustomerManagementPanel extends JPanel {
                 String tier = calculateTier(points);
                 if (tier.contains("Platinum")) platinumCount++;
                 else if (tier.contains("Gold")) goldCount++;
-                else if (tier.contains("Silver")) silverCount++;
-                else bronzeCount++;
             }
             rsTier.close();
             psTier.close();

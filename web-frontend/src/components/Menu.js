@@ -3,6 +3,11 @@ import React, { useEffect, useState } from "react";
 
 function Menu({ addToCart }) {
   const [products, setProducts] = useState([]);
+  const [expandedProduct, setExpandedProduct] = useState(null);
+
+  const toggleProduct = (productId) => {
+    setExpandedProduct(expandedProduct === productId ? null : productId);
+  };
 
   useEffect(() => {
     // Use IP address instead of localhost for mobile access
@@ -136,45 +141,84 @@ function Menu({ addToCart }) {
       }}>Product Menu</h2>
       <div style={productListStyle}>
         {products.map((product, idx) => (
-          <div
-            key={product.id}
-            style={{ ...productCardStyle, ...(hoverIdx === idx ? productCardHover : {}) }}
-            onMouseEnter={() => setHoverIdx(idx)}
-            onMouseLeave={() => setHoverIdx(-1)}
-          >
-            {/* Ảnh sản phẩm */}
-            {product.imageUrl ? (
-              <img
-                src={`http://${window.location.hostname}:8081${encodeURI(product.imageUrl)}`}
-                alt={product.name}
-                style={imageStyle}
-                onError={(e) => {
-                  console.log('Image load error:', e.target.src);
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-            ) : null}
-            <div style={{...placeholderStyle, display: product.imageUrl ? 'none' : 'flex'}}>
-              No Image
-            </div>
-
-            {/* Thông tin sản phẩm */}
-            <div style={infoStyle}>
-              <div style={nameStyle}>{product.name}</div>
-              <div style={priceStyle}>Price: {product.price.toLocaleString()}₫</div>
-              <div style={stockStyle}>Stock: {product.stock}</div>
-            </div>
-            {/* Nút thêm vào giỏ hàng */}
-            <button
-              onClick={() => addToCart(product)}
-              style={{ ...buttonStyle, ...(btnHoverIdx === idx ? buttonHover : {}) }}
-              onMouseEnter={() => setBtnHoverIdx(idx)}
-              onMouseLeave={() => setBtnHoverIdx(-1)}
+          <React.Fragment key={product.id}>
+            <div
+              style={{ ...productCardStyle, ...(hoverIdx === idx ? productCardHover : {}) }}
+              onMouseEnter={() => setHoverIdx(idx)}
+              onMouseLeave={() => setHoverIdx(-1)}
+              onClick={() => toggleProduct(product.id)}
             >
-              Add to Cart
-            </button>
-          </div>
+              {/* Ảnh sản phẩm */}
+              {product.imageUrl ? (
+                <img
+                  src={`http://${window.location.hostname}:8081${encodeURI(product.imageUrl)}`}
+                  alt={product.name}
+                  style={imageStyle}
+                  onError={(e) => {
+                    console.log('Image load error:', e.target.src);
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div style={{...placeholderStyle, display: product.imageUrl ? 'none' : 'flex'}}>
+                No Image
+              </div>
+
+              {/* Thông tin sản phẩm */}
+              <div style={infoStyle}>
+                <div style={nameStyle}>{product.name}</div>
+                <div style={priceStyle}>Price: {product.price.toLocaleString()}₫</div>
+                <div style={stockStyle}>Stock: {product.stock}</div>
+              </div>
+              {/* Nút thêm vào giỏ hàng */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToCart(product);
+                }}
+                style={{ ...buttonStyle, ...(btnHoverIdx === idx ? buttonHover : {}) }}
+                onMouseEnter={() => setBtnHoverIdx(idx)}
+                onMouseLeave={() => setBtnHoverIdx(-1)}
+              >
+                Add to Cart
+              </button>
+            </div>
+            
+            {/* Description Section - Hiển thị khi click vào card */}
+            {expandedProduct === product.id && (
+              <div style={{
+                background: '#fff',
+                borderRadius: 14,
+                padding: 18,
+                marginTop: -12,
+                marginBottom: 12,
+                border: "1.5px solid #bbdefb",
+                borderTop: 'none',
+                borderTopLeftRadius: 0,
+                borderTopRightRadius: 0,
+                boxShadow: "0 4px 12px rgba(44,62,80,0.08)",
+                fontSize: 15,
+                color: '#555',
+                lineHeight: '1.6',
+                fontFamily: 'Roboto, Arial, sans-serif'
+              }}>
+                <div style={{
+                  fontWeight: 600,
+                  color: '#1976d2',
+                  marginBottom: 8,
+                  fontSize: 16
+                }}>Description:</div>
+                {product.description ? (
+                  <div>{product.description}</div>
+                ) : (
+                  <div style={{ fontStyle: 'italic', color: '#999' }}>
+                    No description available for this product.
+                  </div>
+                )}
+              </div>
+            )}
+          </React.Fragment>
         ))}
       </div>
     </div>

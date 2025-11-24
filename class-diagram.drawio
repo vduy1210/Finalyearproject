@@ -1,0 +1,133 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.1.1">
+  <diagram id="ClassDiagramERD" name="Class Diagram ERD Aligned">
+    <mxGraphModel dx="1895" dy="1105" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="pkg_web" parent="1" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Web Application" vertex="1">
+          <mxGeometry height="840" width="1000" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="web_order" parent="pkg_web" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;WebOrder" vertex="1">
+          <mxGeometry height="489.99923076923073" width="260" x="360" y="338.73" as="geometry" />
+        </mxCell>
+        <mxCell id="web_order_a" parent="web_order" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- orderId: int {PK, AUTO_INCREMENT}&#xa;- customerId: int {FK}&#xa;- staffId: int {FK}&#xa;- userId: int {FK}&#xa;- orderDate: DateTime&#xa;- totalAmount: double&#xa;- tax: double&#xa;- discount: double&#xa;- total: double&#xa;- status: String {Pending...}&#xa;- shippingName: String&#xa;- shippingPhone: String&#xa;- shippingEmail: String&#xa;- tableNumber: String" vertex="1">
+          <mxGeometry height="270.7692307692307" width="260" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="web_order_m" parent="web_order" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getOrderId(): int&#xa;+ setOrderId(int): void&#xa;+ getCustomerId(): int&#xa;+ setCustomerId(int): void&#xa;+ getStaffId(): int&#xa;+ setStaffId(int): void&#xa;+ getUserId(): int&#xa;+ setUserId(int): void&#xa;+ getTotal(): double&#xa;+ setTotal(double): void&#xa;+ getStatus(): String&#xa;+ setStatus(String): void" vertex="1">
+          <mxGeometry height="179.23" width="260" y="310.7692307692307" as="geometry" />
+        </mxCell>
+        <mxCell id="web_details" parent="pkg_web" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;WebOrderDetails" vertex="1">
+          <mxGeometry height="212.3076923076923" width="240" x="710" y="400.00527472527466" as="geometry" />
+        </mxCell>
+        <mxCell id="web_details_a" parent="web_details" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- id: long {PK, AUTO_INCREMENT}&#xa;- orderId: int {FK}&#xa;- productId: long {FK}&#xa;- quantity: int&#xa;- price: double" vertex="1">
+          <mxGeometry height="98.46153846153845" width="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="web_details_m" parent="web_details" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getId(): long&#xa;+ setId(long): void&#xa;+ getOrderId(): int&#xa;+ setOrderId(int): void&#xa;+ getProductId(): long&#xa;+ setProductId(long): void" vertex="1">
+          <mxGeometry height="73.84615384615384" width="240" y="138.46153846153845" as="geometry" />
+        </mxCell>
+        <mxCell id="web_cust" parent="pkg_web" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;Customer" vertex="1">
+          <mxGeometry height="257.1472527472527" width="240" x="40" y="246.15384615384613" as="geometry" />
+        </mxCell>
+        <mxCell id="web_cust_a" parent="web_cust" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- id: int {PK, AUTO_INCREMENT}&#xa;- name: String&#xa;- phone: String {Unique}&#xa;- email: String {Unique}&#xa;- accumulatedPoint: float {DEFAULT 0}" vertex="1">
+          <mxGeometry height="98.46153846153845" width="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="web_cust_m" parent="web_cust" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getId(): int&#xa;+ setId(int): void&#xa;+ getName(): String&#xa;+ setName(String): void&#xa;+ getPhone(): String&#xa;+ setPhone(String): void" vertex="1">
+          <mxGeometry height="118.68571428571427" width="240" y="138.46153846153845" as="geometry" />
+        </mxCell>
+        <mxCell id="web_user" parent="pkg_web" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;User" vertex="1">
+          <mxGeometry height="188.56615384615384" width="260" x="360" y="49.230769230769226" as="geometry" />
+        </mxCell>
+        <mxCell id="web_user_a" parent="web_user" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- id: int {PK, AUTO_INCREMENT}&#xa;- username: String {Unique}&#xa;- password: String&#xa;- role: String {admin|staff}" vertex="1">
+          <mxGeometry height="73.84615384615384" width="260" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="web_user_m" parent="web_user" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getId(): int&#xa;+ setId(int): void&#xa;+ getUsername(): String&#xa;+ setUsername(String): void" vertex="1">
+          <mxGeometry height="74.71999999999998" width="260" y="113.84615384615384" as="geometry" />
+        </mxCell>
+        <mxCell id="web_prod" parent="pkg_web" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;Product" vertex="1">
+          <mxGeometry height="222.86153846153843" width="240" x="700" y="49.230769230769226" as="geometry" />
+        </mxCell>
+        <mxCell id="web_prod_a" parent="web_prod" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- id: Long {PK, AUTO_INCREMENT}&#xa;- name: String&#xa;- price: double&#xa;- stock: int&#xa;- createdAt: Timestamp" vertex="1">
+          <mxGeometry height="98.46153846153845" width="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="web_prod_m" parent="web_prod" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getId(): Long&#xa;+ setId(Long): void&#xa;+ getName(): String&#xa;+ setName(String): void" vertex="1">
+          <mxGeometry height="84.39999999999999" width="240" y="138.46153846153845" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_web_order_cust" edge="1" parent="pkg_web" source="web_order" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;" target="web_cust" value="N..1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_web_order_staff" edge="1" parent="pkg_web" source="web_order" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" target="web_user" value="N..1 (Staff)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_web_order_user" edge="1" parent="pkg_web" source="web_order" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="web_user" value="N..1 (User)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_web_order_details" edge="1" parent="pkg_web" source="web_order" style="endArrow=none;html=1;endFill=0;startArrow=diamond;startFill=1;startSize=16;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;" target="web_details" value="1..N">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_web_details_prod" edge="1" parent="pkg_web" source="web_details" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;" target="web_prod" value="N..1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_desktop" parent="1" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;" value="Desktop POS System" vertex="1">
+          <mxGeometry height="600" width="1000" x="1050" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="app_order" parent="pkg_desktop" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;AppOrder" vertex="1">
+          <mxGeometry height="300" width="260" x="360" y="276" as="geometry" />
+        </mxCell>
+        <mxCell id="app_order_a" parent="app_order" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- orderId: int {PK, AUTO_INCREMENT}&#xa;- customerId: int {FK}&#xa;- userId: int {FK}&#xa;- orderDate: DateTime&#xa;- totalAmount: double&#xa;- tax: double&#xa;- discount: double&#xa;- total: double&#xa;- status: String {DEFAULT &#39;Pending&#39;}&#xa;- tableNumber: String" vertex="1">
+          <mxGeometry height="160" width="260" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="app_order_m" parent="app_order" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getOrderId(): int&#xa;+ setOrderId(int): void&#xa;+ getTotal(): double&#xa;+ setTotal(double): void&#xa;+ getStatus(): String&#xa;+ setStatus(String): void" vertex="1">
+          <mxGeometry height="100" width="260" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="app_details" parent="pkg_desktop" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;AppOrderDetails" vertex="1">
+          <mxGeometry height="220" width="240" x="700" y="287" as="geometry" />
+        </mxCell>
+        <mxCell id="app_details_a" parent="app_details" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- id: int {PK, AUTO_INCREMENT}&#xa;- orderId: int {FK}&#xa;- productId: long {FK}&#xa;- quantity: int&#xa;- price: double" vertex="1">
+          <mxGeometry height="80" width="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="app_details_m" parent="app_details" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getId(): int&#xa;+ setId(int): void&#xa;+ getOrderId(): int&#xa;+ setOrderId(int): void&#xa;+ getProductId(): long&#xa;+ setProductId(long): void" vertex="1">
+          <mxGeometry height="100" width="240" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_cust" parent="pkg_desktop" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;customer" vertex="1">
+          <mxGeometry height="220" width="240" x="40" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_cust_a" parent="desk_cust" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- id: int {PK, AUTO_INCREMENT}&#xa;- name: String {NOT NULL}&#xa;- phone: String {Unique, NOT NULL}&#xa;- email: String&#xa;- accumulatedPoint: float {DEFAULT 0}" vertex="1">
+          <mxGeometry height="80" width="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_cust_m" parent="desk_cust" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getId(): int&#xa;+ setId(int): void&#xa;+ getName(): String&#xa;+ setName(String): void&#xa;+ getPhone(): String&#xa;+ setPhone(String): void" vertex="1">
+          <mxGeometry height="100" width="240" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_user" parent="pkg_desktop" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;user" vertex="1">
+          <mxGeometry height="170" width="260" x="360" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_user_a" parent="desk_user" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- userId: int {PK, AUTO_INCREMENT}&#xa;- userName: String {Unique}&#xa;- password: String&#xa;- role: String {admin|staff}" vertex="1">
+          <mxGeometry height="60" width="260" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_user_m" parent="desk_user" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getUserId(): int&#xa;+ setUserId(int): void&#xa;+ getUserName(): String&#xa;+ setUserName(String): void" vertex="1">
+          <mxGeometry height="70" width="260" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_prod" parent="pkg_desktop" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;" value="&lt;&lt;Entity&gt;&gt;&#xa;Product" vertex="1">
+          <mxGeometry height="180" width="240" x="700" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_prod_a" parent="desk_prod" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- id: Long {PK, AUTO_INCREMENT}&#xa;- name: String&#xa;- price: double&#xa;- stock: int&#xa;- createdAt: Timestamp" vertex="1">
+          <mxGeometry height="80" width="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="desk_prod_m" parent="desk_prod" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;dashed=1;" value="+ getId(): Long&#xa;+ setId(Long): void&#xa;+ getName(): String&#xa;+ setName(String): void" vertex="1">
+          <mxGeometry height="60" width="240" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_app_order_cust" edge="1" parent="pkg_desktop" source="app_order" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;" target="desk_cust" value="N..1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_app_order_user" edge="1" parent="pkg_desktop" source="app_order" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;" target="desk_user" value="N..1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_app_order_details" edge="1" parent="pkg_desktop" source="app_order" style="endArrow=none;html=1;endFill=0;startArrow=diamond;startFill=1;startSize=16;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;" target="app_details" value="1..N">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_app_details_prod" edge="1" parent="pkg_desktop" source="app_details" style="endArrow=open;html=1;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=bottom;" target="desk_prod" value="N..1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

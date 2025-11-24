@@ -5,6 +5,8 @@ function ProductEdit({ product, onImageUploaded }) {
   const [localImageUrl, setLocalImageUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [description, setDescription] = useState(product?.description || "");
+  const [savingDescription, setSavingDescription] = useState(false);
 
   if (!product) {
     return <div style={{ marginTop: 20, color: '#888', fontFamily: 'Roboto, Arial, sans-serif' }}>No product selected.</div>;
@@ -59,6 +61,37 @@ function ProductEdit({ product, onImageUploaded }) {
         console.error('Upload failed:', error);
         setMessage(`Upload failed: ${error.message}`);
         setUploading(false);
+      });
+  }
+
+  function handleDescriptionSave() {
+    setSavingDescription(true);
+    
+    fetch(`http://localhost:8081/api/products/${product.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...product,
+        description: description
+      }),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        setMessage("Description saved successfully!");
+        setSavingDescription(false);
+        if (onImageUploaded) onImageUploaded(); // Refresh to show updated description
+      })
+      .catch(error => {
+        console.error('Save failed:', error);
+        setMessage(`Save failed: ${error.message}`);
+        setSavingDescription(false);
       });
   }
 
@@ -155,6 +188,20 @@ function ProductEdit({ product, onImageUploaded }) {
     borderRadius: 8,
     textAlign: "left"
   };
+  const textareaStyle = {
+    width: "100%",
+    minHeight: 100,
+    padding: 12,
+    borderRadius: 8,
+    border: "1.5px solid #bbdefb",
+    background: "#f5f7fa",
+    color: "#333",
+    fontSize: 15,
+    fontFamily: 'Roboto, Arial, sans-serif',
+    resize: "vertical",
+    marginTop: 8,
+    boxSizing: "border-box"
+  };
 
   return (
     <div style={panelStyle}>
@@ -217,6 +264,34 @@ function ProductEdit({ product, onImageUploaded }) {
           Type: {selectedFile.type}<br />
         </div>
       )}
+      
+      {/* Description Edit Section */}
+      <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1.5px solid #bbdefb" }}>
+        <div style={{ color: "#1976d2", fontWeight: 600, marginBottom: 6 }}>Product Description</div>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Enter product description here..."
+          style={textareaStyle}
+          maxLength={500}
+          disabled={savingDescription}
+        />
+        <div style={{ fontSize: 12, color: "#888", textAlign: "right", marginTop: 4 }}>
+          {description.length}/500 characters
+        </div>
+        <button
+          onClick={handleDescriptionSave}
+          disabled={savingDescription}
+          style={{
+            ...buttonStyle,
+            background: savingDescription ? "#90caf9" : "#27ae60",
+            cursor: savingDescription ? "not-allowed" : "pointer",
+            opacity: savingDescription ? 0.7 : 1
+          }}
+        >
+          {savingDescription ? "Saving..." : "Save Description"}
+        </button>
+      </div>
     </div>
   );
 }

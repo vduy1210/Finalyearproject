@@ -3,6 +3,7 @@ package com.example.saleapp.web_backend.controller;
 import com.example.saleapp.web_backend.dto.OrderRequest;
 import com.example.saleapp.web_backend.model.*;
 import com.example.saleapp.web_backend.repository.*;
+import com.example.saleapp.web_backend.validator.InputValidator;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin(origins = "*")
 public class OrderController {
     @Autowired
     private OrderRepository orderRepository;
@@ -25,11 +25,17 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<?> placeOrder(@RequestBody OrderRequest orderRequest) {
         try {
+            // Input validation
+            InputValidator.validatePhone(orderRequest.getPhone());
+            InputValidator.validateEmail(orderRequest.getEmail());
+            String safeName = InputValidator.validateAndSanitizeName(orderRequest.getName());
+            InputValidator.validateTableNumber(orderRequest.getTableNumber());
+            
             // 1) Find or create customer by phone (more unique identifier)
             Customer customer = customerRepository.findByPhone(orderRequest.getPhone())
                     .orElseGet(() -> {
                         Customer c = new Customer();
-                        c.setName(orderRequest.getName());
+                        c.setName(safeName); // Use sanitized name
                         c.setPhone(orderRequest.getPhone());
                         c.setEmail(orderRequest.getEmail());
                         c.setAccumulatedPoint(0.0);
@@ -37,9 +43,9 @@ public class OrderController {
                     });
 
             // 2) Update customer information if needed
-            if (!customer.getName().equals(orderRequest.getName()) || 
+            if (!customer.getName().equals(safeName) || 
                 !customer.getEmail().equals(orderRequest.getEmail())) {
-                customer.setName(orderRequest.getName());
+                customer.setName(safeName); // Use sanitized name
                 customer.setEmail(orderRequest.getEmail());
                 customerRepository.save(customer);
             }
@@ -117,7 +123,7 @@ public class OrderController {
                 item.setOrder(savedOrder);
             }
             // The items will be saved automatically due to CascadeType.ALL
-            return ResponseEntity.ok(Map.of("success", true, "orderId", order.getId()));
+            return ResponseEntity.ok(Map.of("success", true, "orderId", savedOrder.getId()));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error placing order: " + e.getMessage());

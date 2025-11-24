@@ -1,17 +1,13 @@
 // App.js
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import Login from "../components/Login";
-import Menu from "../components/Menu";
-import Cart from "../components/Cart";
-import Orders from "../components/Orders";
-import ProductManagerPanel from "../components/ProductManagerPanel";
-import { NotificationProvider } from "../components/NotificationProvider";
+import { NotificationProvider, useNotification } from "../components/NotificationProvider";
 import AppRoutes from "../routes";
 
 
-function App() {
+function AppContent() {
+  const notification = useNotification();
   const [userName, setUserName] = useState(localStorage.getItem("userName") || "");
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem("cart");
@@ -34,8 +30,18 @@ function App() {
           ...updated[idx],
           quantity: (updated[idx].quantity || 1) + 1
         };
+        // Thông báo khi thêm số lượng
+        notification.success(
+          'Added to Cart',
+          `${product.name} quantity increased to ${updated[idx].quantity}`
+        );
         return updated;
       }
+      // Thông báo khi thêm món mới
+      notification.success(
+        'Added to Cart',
+        `${product.name} has been added to your cart`
+      );
       return [...prev, { ...product, quantity: 1 }];
     });
   };
@@ -62,19 +68,25 @@ function App() {
   };
 
   return (
+    <Router>
+      <Navbar userName={userName} setUserName={setUserName} />
+      <AppRoutes 
+        setUserName={setUserName}
+        addToCart={addToCart}
+        cart={cart}
+        removeFromCart={removeFromCart}
+        clearCart={clearCart}
+        updateCartQuantity={updateCartQuantity}
+        userName={userName}
+      />
+    </Router>
+  );
+}
+
+function App() {
+  return (
     <NotificationProvider>
-      <Router>
-        <Navbar userName={userName} setUserName={setUserName} />
-        <AppRoutes 
-          setUserName={setUserName}
-          addToCart={addToCart}
-          cart={cart}
-          removeFromCart={removeFromCart}
-          clearCart={clearCart}
-          updateCartQuantity={updateCartQuantity}
-          userName={userName}
-        />
-      </Router>
+      <AppContent />
     </NotificationProvider>
   );
 }

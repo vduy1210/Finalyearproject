@@ -17,7 +17,6 @@ public class TierConfigDialog extends JDialog {
     
     private static final Color BACKGROUND_COLOR = new Color(0xDD, 0xE3, 0xEA);
     private static final Color WHITE = Color.WHITE;
-    private static final Color MAIN_COLOR = new Color(52, 152, 219);
     private static final Color COLOR_TEXT = new Color(33, 37, 41);
     private static final Color COLOR_BORDER = new Color(230, 235, 241);
 
@@ -84,21 +83,21 @@ public class TierConfigDialog extends JDialog {
         
         RoundedButton editBtn = new RoundedButton("Edit Selected");
         editBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        editBtn.addActionListener(e -> editSelectedTier());
+        editBtn.addActionListener(_ -> editSelectedTier());
         
         RoundedButton addBtn = new RoundedButton("Add New Tier");
         addBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        addBtn.addActionListener(e -> addNewTier());
+        addBtn.addActionListener(_ -> addNewTier());
         
         RoundedButton deleteBtn = new RoundedButton("Delete");
         deleteBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         deleteBtn.setBackground(new Color(220, 53, 69));
-        deleteBtn.addActionListener(e -> deleteSelectedTier());
+        deleteBtn.addActionListener(_ -> deleteSelectedTier());
         
         RoundedButton closeBtn = new RoundedButton("Close");
         closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         closeBtn.setBackground(new Color(108, 117, 125));
-        closeBtn.addActionListener(e -> dispose());
+        closeBtn.addActionListener(_ -> dispose());
         
         buttonPanel.add(addBtn);
         buttonPanel.add(editBtn);

@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
@@ -106,6 +105,31 @@ public class ProductController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error checking image: " + e.getMessage());
         }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Product updatedProduct) {
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            return ResponseEntity.status(404).body("Product not found with ID: " + id);
+        }
+        
+        // Update fields (don't update ID and imageUrl - imageUrl has separate endpoint)
+        if (updatedProduct.getName() != null) {
+            product.setName(updatedProduct.getName());
+        }
+        if (updatedProduct.getPrice() > 0) {
+            product.setPrice(updatedProduct.getPrice());
+        }
+        if (updatedProduct.getStock() >= 0) {
+            product.setStock(updatedProduct.getStock());
+        }
+        if (updatedProduct.getDescription() != null) {
+            product.setDescription(updatedProduct.getDescription());
+        }
+        
+        Product savedProduct = productRepository.save(product);
+        return ResponseEntity.ok(savedProduct);
     }
 
     @PutMapping("/{id}/stock")

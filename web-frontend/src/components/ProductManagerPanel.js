@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ProductEdit from "./ProductEdit";
 
 function ProductManagerPanel() {
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const editFormRef = useRef(null);
 
   // Fetch products from backend
   function fetchProducts() {
@@ -15,6 +16,16 @@ function ProductManagerPanel() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // Scroll to edit form when product is selected
+  useEffect(() => {
+    if (selectedProduct && editFormRef.current) {
+      editFormRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest' 
+      });
+    }
+  }, [selectedProduct]);
 
   // Style đồng bộ với Menu/Cart
   const containerStyle = {
@@ -117,39 +128,43 @@ function ProductManagerPanel() {
       }}>Product Manager Panel</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         {products.map((product, idx) => (
-          <div
-            key={product.id}
-            style={cardStyle}
-          >
-            {product.imageUrl ? (
-              <img
-                src={`http://localhost:8081${encodeURI(product.imageUrl)}`}
-                alt={product.name}
-                style={imageStyle}
-              />
-            ) : (
-              <div style={placeholderStyle}>No Image</div>
-            )}
-            <div style={infoStyle}>
-              <div style={nameStyle}>{product.name}</div>
-              <div style={priceStyle}>Price: {product.price.toLocaleString()}₫</div>
-              <div style={stockStyle}>Stock: {product.stock}</div>
+          <React.Fragment key={product.id}>
+            <div style={cardStyle}>
+              {product.imageUrl ? (
+                <img
+                  src={`http://localhost:8081${encodeURI(product.imageUrl)}`}
+                  alt={product.name}
+                  style={imageStyle}
+                />
+              ) : (
+                <div style={placeholderStyle}>No Image</div>
+              )}
+              <div style={infoStyle}>
+                <div style={nameStyle}>{product.name}</div>
+                <div style={priceStyle}>Price: {product.price.toLocaleString()}₫</div>
+                <div style={stockStyle}>Stock: {product.stock}</div>
+              </div>
+              <button
+                onClick={() => setSelectedProduct(product)}
+                style={{ ...buttonStyle, ...(btnHoverIdx === idx ? buttonHover : {}) }}
+                onMouseEnter={() => setBtnHoverIdx(idx)}
+                onMouseLeave={() => setBtnHoverIdx(-1)}
+              >
+                Edit
+              </button>
             </div>
-            <button
-              onClick={() => setSelectedProduct(product)}
-              style={{ ...buttonStyle, ...(btnHoverIdx === idx ? buttonHover : {}) }}
-              onMouseEnter={() => setBtnHoverIdx(idx)}
-              onMouseLeave={() => setBtnHoverIdx(-1)}
-            >
-              Edit
-            </button>
-          </div>
+            {/* Show edit form right below the selected product */}
+            {selectedProduct && selectedProduct.id === product.id && (
+              <div ref={editFormRef} style={{ marginBottom: 24 }}>
+                <ProductEdit
+                  product={selectedProduct}
+                  onImageUploaded={fetchProducts}
+                />
+              </div>
+            )}
+          </React.Fragment>
         ))}
       </div>
-      <ProductEdit
-        product={selectedProduct}
-        onImageUploaded={fetchProducts}
-      />
     </div>
   );
 }

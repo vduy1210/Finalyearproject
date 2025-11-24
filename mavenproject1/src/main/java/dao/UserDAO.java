@@ -1,6 +1,7 @@
 package dao;
 
 import database.DatabaseConnector;
+import util.PasswordUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,16 +19,21 @@ public class UserDAO {
     }
 
     public boolean authenticateUser(String username, String password) {
-        String sql = "SELECT userID FROM users WHERE userName = ? AND password = ?"; // TODO: Hash password
-        try (Connection conn = DatabaseConnector.getConnection(); // Sử dụng DatabaseConnector
+        // Query only for hashed password, verify using BCrypt
+        String sql = "SELECT password FROM users WHERE userName = ?";
+        try (Connection conn = DatabaseConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
             try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next();
+                if (rs.next()) {
+                    String hashedPassword = rs.getString("password");
+                    // Use BCrypt to verify password
+                    return PasswordUtil.checkPassword(password, hashedPassword);
+                }
+                return false;
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Nên có logging tốt hơn
+            e.printStackTrace();
             return false;
         }
     }
@@ -49,13 +55,13 @@ public class UserDAO {
     }
 
     public boolean registerUser(String username, String email, String password) {
-        String sql = "INSERT INTO users (userName, email, password, role) VALUES (?, ?, ?, 'user')"; // TODO: Hash password
+        String sql = "INSERT INTO users (userName, email, password, role) VALUES (?, ?, ?, 'user')";
         try (Connection conn = DatabaseConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
             stmt.setString(2, email);
-            stmt.setString(3, password); // Nên lưu mật khẩu đã hash
-            // stmt.setString(4, "user"); // Đã set trực tiếp trong câu SQL
+            // Hash password using BCrypt before storing
+            stmt.setString(3, PasswordUtil.hashPassword(password));
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -129,7 +135,8 @@ public class UserDAO {
         try (Connection conn = DatabaseConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
+            // Hash password using BCrypt before storing
+            stmt.setString(2, PasswordUtil.hashPassword(password));
             stmt.setString(3, email);
             stmt.setString(4, role);
             int n = stmt.executeUpdate();
@@ -152,7 +159,8 @@ public class UserDAO {
         try (Connection conn = DatabaseConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
+            // Hash password using BCrypt before storing
+            stmt.setString(2, PasswordUtil.hashPassword(password));
             stmt.setString(3, email);
             stmt.setString(4, role);
             stmt.setInt(5, userId);

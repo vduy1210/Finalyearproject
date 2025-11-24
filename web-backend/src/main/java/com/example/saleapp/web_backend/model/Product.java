@@ -19,6 +19,9 @@ public class Product {
 
     private String imageUrl;
 
+    @Column(length = 500)
+    private String description;
+
     // Constructors
     public Product() {
     }
@@ -62,5 +65,13 @@ public class Product {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

@@ -1,0 +1,43 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.0.3">
+  <diagram name="File System Architecture" id="file-system-arch">
+    <mxGraphModel dx="1426" dy="884" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Coffee Shop POS - File System Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="400" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="project-root" value="Project Root&lt;br&gt;Finalyearproject/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;align=center;" parent="1" vertex="1">
+          <mxGeometry x="600" y="100" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="desktop-app" value="Desktop Application&lt;br&gt;[Java Swing]&lt;br&gt;&lt;br&gt;Files:&lt;br&gt;• Database configs&lt;br&gt;• Log files&lt;br&gt;• Receipt templates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="90" y="650" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="web-backend" value="Web Backend&lt;br&gt;[Spring Boot]&lt;br&gt;&lt;br&gt;Files:&lt;br&gt;• Image upload handling&lt;br&gt;• Static file serving&lt;br&gt;• Application logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="350" y="200" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="web-frontend" value="Web Frontend&lt;br&gt;[React]&lt;br&gt;&lt;br&gt;Files:&lt;br&gt;• Static assets&lt;br&gt;• Build artifacts&lt;br&gt;• Component files" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="600" y="200" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="uploads-dir" value="uploads/ Directory&lt;br&gt;[Product Images]&lt;br&gt;&lt;br&gt;Structure:&lt;br&gt;• /uploads/products/&lt;br&gt;• Max size: 10MB&lt;br&gt;• Formats: JPG, PNG, GIF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="100" y="400" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="database-files" value="Database Storage&lt;br&gt;[MySQL Files]&lt;br&gt;&lt;br&gt;Files:&lt;br&gt;• Table data (.ibd)&lt;br&gt;• Binary logs&lt;br&gt;• Error logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="350" y="400" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="config-files" value="Configuration Files&lt;br&gt;[System Settings]&lt;br&gt;&lt;br&gt;Files:&lt;br&gt;• application.properties&lt;br&gt;• pom.xml&lt;br&gt;• package.json" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=left;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="600" y="400" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" parent="1" source="web-backend" target="uploads-dir" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" parent="1" source="web-backend" target="database-files" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" parent="1" source="desktop-app" target="database-files" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

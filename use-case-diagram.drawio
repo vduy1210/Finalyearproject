@@ -1,0 +1,289 @@
+<mxfile host="app.diagrams.net" modified="2024-05-22T10:00:00.000Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" etag="buffer" version="24.4.0" type="device">
+  <diagram id="UseCaseDiagram" name="Use Case Diagram">
+    <mxGraphModel dx="2500" dy="1500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="2000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================= ACTORS ================= -->
+        <mxCell id="actor_staff" value="Staff" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="400" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_admin" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1200" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_customer" value="Customer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="400" width="30" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Generalization: Admin extends Staff -->
+        <mxCell id="gen_admin_staff" value="" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="actor_admin" target="actor_staff">
+          <mxGeometry width="160" relative="1" as="geometry">
+            <mxPoint x="60" y="1190" as="sourcePoint" />
+            <mxPoint x="60" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ================= DESKTOP POS SYSTEM BOUNDARY ================= -->
+        <mxCell id="sys_desktop" value="Desktop POS System" style="shape=rect;html=1;verticalAlign=top;fontStyle=1;whiteSpace=wrap;align=center;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="120" y="40" width="900" height="1800" as="geometry" />
+        </mxCell>
+
+        <!-- Group: Authentication -->
+        <mxCell id="grp_auth" value="Authentication" style="group" vertex="1" connectable="0" parent="sys_desktop">
+          <mxGeometry x="20" y="40" width="300" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_login" value="Login" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_auth">
+          <mxGeometry x="0" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_auth" value="Authenticate User" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_auth">
+          <mxGeometry x="160" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_login_auth" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_auth" source="uc_login" target="uc_auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_logout" value="Logout" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_auth">
+          <mxGeometry x="0" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_register" value="Register" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_auth">
+          <mxGeometry x="160" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Group: Product Management -->
+        <mxCell id="grp_prod" value="Product Management" style="group" vertex="1" connectable="0" parent="sys_desktop">
+          <mxGeometry x="20" y="220" width="500" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_prod" value="Manage Products" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_prod">
+          <mxGeometry x="180" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_prod" value="View Products" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_prod">
+          <mxGeometry x="0" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_search_prod" value="Search Products" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_prod">
+          <mxGeometry x="0" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_add_prod" value="Add Product" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_prod">
+          <mxGeometry x="360" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_edit_prod" value="Edit Product" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_prod">
+          <mxGeometry x="360" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_del_prod" value="Delete Product" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_prod">
+          <mxGeometry x="360" y="160" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_upd_stock" value="Update Stock" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_prod">
+          <mxGeometry x="180" y="180" width="140" height="70" as="geometry" />
+        </mxCell>
+        <!-- Generalizations -->
+        <mxCell id="gen_add_manage" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_prod" source="uc_add_prod" target="uc_manage_prod"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="gen_edit_manage" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_prod" source="uc_edit_prod" target="uc_manage_prod"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="gen_del_manage" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_prod" source="uc_del_prod" target="uc_manage_prod"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="gen_stock_manage" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="grp_prod" source="uc_upd_stock" target="uc_manage_prod"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Group: Order Management -->
+        <mxCell id="grp_order" value="Order Management" style="group" vertex="1" connectable="0" parent="sys_desktop">
+          <mxGeometry x="20" y="500" width="800" height="500" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_create_order" value="Create Order" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="200" y="100" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_sel_table" value="Select Table" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="450" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_validate_input" value="Validate Input" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="450" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_get_cust" value="Get Customer Info" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="450" y="160" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_calc_total" value="Calculate Total" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="450" y="240" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_create_new_cust" value="Create New Customer" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="0" y="180" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_print_receipt" value="Print Receipt" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="0" y="260" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_orders" value="View All Orders" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="200" y="350" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_filter_orders" value="Filter Orders" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="450" y="350" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_merge_orders" value="Merge Orders" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="450" y="430" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_cancel_order" value="Cancel Order" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="0" y="350" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_upd_status" value="Update Order Status" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_order">
+          <mxGeometry x="0" y="430" width="140" height="70" as="geometry" />
+        </mxCell>
+        <!-- Relationships -->
+        <mxCell id="rel_create_sel_table" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_order" source="uc_create_order" target="uc_sel_table"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_create_validate" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_order" source="uc_create_order" target="uc_validate_input"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_create_getcust" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_order" source="uc_create_order" target="uc_get_cust"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_create_calc" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_order" source="uc_create_order" target="uc_calc_total"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_create_stock" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="sys_desktop" source="uc_create_order" target="uc_upd_stock"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_create_extend_cust" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_order" source="uc_create_new_cust" target="uc_create_order"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_create_extend_print" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="grp_order" source="uc_print_receipt" target="uc_create_order"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_view_filter" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_order" source="uc_filter_orders" target="uc_view_orders"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_view_merge" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="grp_order" source="uc_merge_orders" target="uc_view_orders"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Group: Customer Management -->
+        <mxCell id="grp_cust" value="Customer Management" style="group" vertex="1" connectable="0" parent="sys_desktop">
+          <mxGeometry x="20" y="1020" width="500" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_cust" value="View Customers" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_cust">
+          <mxGeometry x="0" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_search_cust" value="Search Customer" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_cust">
+          <mxGeometry x="160" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_add_cust" value="Add Customer" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_cust">
+          <mxGeometry x="320" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_edit_cust" value="Edit Customer Info" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_cust">
+          <mxGeometry x="0" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_tier" value="View Customer Tier" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_cust">
+          <mxGeometry x="160" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_tiers" value="Manage Tiers" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_cust">
+          <mxGeometry x="320" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Group: Reporting -->
+        <mxCell id="grp_report" value="Reporting" style="group" vertex="1" connectable="0" parent="sys_desktop">
+          <mxGeometry x="20" y="1200" width="500" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_dash" value="View Dashboard" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_report">
+          <mxGeometry x="0" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_rev_today" value="View Revenue Today" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_report">
+          <mxGeometry x="160" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_report" value="View Revenue Report" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_report">
+          <mxGeometry x="0" y="90" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_export_excel" value="Export to Excel" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_report">
+          <mxGeometry x="200" y="90" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_print_report" value="Print Report" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_report">
+          <mxGeometry x="360" y="90" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_top_prod" value="View Top Products" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_report">
+          <mxGeometry x="0" y="170" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_top_cust" value="View Top Customers" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_report">
+          <mxGeometry x="160" y="170" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_report_extend_export" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_report" source="uc_export_excel" target="uc_view_report"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_report_extend_print" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_report" source="uc_print_report" target="uc_view_report"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Group: User Management (Admin) -->
+        <mxCell id="grp_user" value="User Management" style="group" vertex="1" connectable="0" parent="sys_desktop">
+          <mxGeometry x="20" y="1480" width="500" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_manage_users" value="Manage Users" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_user">
+          <mxGeometry x="180" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_create_user" value="Create User" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_user">
+          <mxGeometry x="360" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_upd_user" value="Update User" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_user">
+          <mxGeometry x="360" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_del_user" value="Delete User" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_user">
+          <mxGeometry x="360" y="160" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_users" value="View User List" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_user">
+          <mxGeometry x="0" y="0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_search_user" value="Search User" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_user">
+          <mxGeometry x="0" y="80" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_assign_roles" value="Assign Roles" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="grp_user">
+          <mxGeometry x="0" y="160" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="gen_create_user" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_user" source="uc_create_user" target="uc_manage_users"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="gen_upd_user" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_user" source="uc_upd_user" target="uc_manage_users"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="gen_del_user" style="endArrow=block;endSize=16;endFill=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="grp_user" source="uc_del_user" target="uc_manage_users"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+
+        <!-- ================= WEB APPLICATION BOUNDARY ================= -->
+        <mxCell id="sys_web" value="Web Application" style="shape=rect;html=1;verticalAlign=top;fontStyle=1;whiteSpace=wrap;align=center;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="40" width="700" height="800" as="geometry" />
+        </mxCell>
+
+        <mxCell id="uc_browse_menu" value="Browse Menu" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="sys_web">
+          <mxGeometry x="500" y="40" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_add_cart" value="Add to Cart" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="sys_web">
+          <mxGeometry x="500" y="130" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_cart" value="View Cart" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="sys_web">
+          <mxGeometry x="500" y="220" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_upd_cart" value="Update Cart" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="sys_web">
+          <mxGeometry x="500" y="310" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_place_order_web" value="Place Order" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="sys_web">
+          <mxGeometry x="500" y="400" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_validate_stock_web" value="Validate Stock" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="sys_web">
+          <mxGeometry x="200" y="350" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_create_cust_web" value="Create/Update Customer" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="sys_web">
+          <mxGeometry x="200" y="440" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_view_history" value="View Order History" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="sys_web">
+          <mxGeometry x="500" y="500" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_place_validate_web" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="sys_web" source="uc_place_order_web" target="uc_validate_stock_web"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_place_cust_web" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="sys_web" source="uc_place_order_web" target="uc_create_cust_web"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rel_place_stock_web" value="&lt;&lt;include&gt;&gt;" style="endArrow=open;endSize=12;dashed=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="sys_web" source="uc_place_order_web" target="uc_upd_stock"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+
+        <!-- ================= ACTOR-USE CASE ASSOCIATIONS ================= -->
+        <!-- Staff -->
+        <mxCell id="assoc_staff_login" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_login"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_logout" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_logout"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_register" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_register"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_view_prod" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_view_prod"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_search_prod" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_search_prod"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_manage_prod" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_manage_prod"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_create_order" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_create_order"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_view_orders" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_view_orders"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_cancel_order" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_cancel_order"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_upd_status" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_upd_status"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_view_cust" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_view_cust"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_search_cust" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_search_cust"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_add_cust" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_add_cust"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_edit_cust" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_edit_cust"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_view_dash" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_view_dash"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_view_rev_today" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_view_rev_today"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_top_prod" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_top_prod"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_staff_top_cust" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_staff" target="uc_top_cust"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Admin (Inherits Staff, plus extras) -->
+        <mxCell id="assoc_admin_view_report" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_admin" target="uc_view_report"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_admin_manage_users" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_admin" target="uc_manage_users"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_admin_view_users" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_admin" target="uc_view_users"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_admin_search_user" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_admin" target="uc_search_user"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_admin_assign_roles" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_admin" target="uc_assign_roles"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_admin_manage_tiers" style="endArrow=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="actor_admin" target="uc_manage_tiers"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Customer -->
+        <mxCell id="assoc_cust_browse" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="uc_browse_menu" target="actor_customer"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_cust_add" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="uc_add_cart" target="actor_customer"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_cust_view_cart" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="uc_view_cart" target="actor_customer"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_cust_upd_cart" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="uc_upd_cart" target="actor_customer"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_cust_place" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="uc_place_order_web" target="actor_customer"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="assoc_cust_history" style="endArrow=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="uc_view_history" target="actor_customer"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -18,7 +18,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.general.DefaultPieDataset;
 
 public class DashboardPanel extends JPanel {
 
@@ -425,7 +424,7 @@ public class DashboardPanel extends JPanel {
 
     // --- Chart cards using JFreeChart ---
     private JPanel createTop5ProductsChartCard() {
-        JPanel card = createChartCard("📊 Top 5 Best Selling Products", "Top 5 products with highest sales");
+        JPanel card = createChartCard("Top 5 Best Selling Products", "");
         card.setPreferredSize(new Dimension(0, 500));
         JPanel content = (JPanel) card.getComponent(1);
 
@@ -441,6 +440,10 @@ public class DashboardPanel extends JPanel {
         org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
         plot.setBackgroundPaint(Color.WHITE);
         plot.setRangeGridlinePaint(new Color(200, 200, 200));
+        
+        // Set Y-axis to display only integers
+        org.jfree.chart.axis.NumberAxis rangeAxis = (org.jfree.chart.axis.NumberAxis) plot.getRangeAxis();
+        rangeAxis.setStandardTickUnits(org.jfree.chart.axis.NumberAxis.createIntegerTickUnits());
         
         org.jfree.chart.renderer.category.BarRenderer renderer = (org.jfree.chart.renderer.category.BarRenderer) plot.getRenderer();
         renderer.setSeriesPaint(0, PRIMARY_COLOR);
@@ -470,7 +473,7 @@ public class DashboardPanel extends JPanel {
         headerPanel.setBackground(CARD_COLOR);
         headerPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
         
-        JLabel titleLabel = new JLabel("👥 Top Customers This Month");
+        JLabel titleLabel = new JLabel("Top Customers This Month");
         titleLabel.setFont(WIDGET_TITLE_FONT);
         titleLabel.setForeground(TEXT_PRIMARY);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -614,6 +617,10 @@ public class DashboardPanel extends JPanel {
                     org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
                     plot.setBackgroundPaint(Color.WHITE);
                     plot.setRangeGridlinePaint(new Color(200, 200, 200));
+                    
+                    // Set Y-axis to display only integers
+                    org.jfree.chart.axis.NumberAxis rangeAxis = (org.jfree.chart.axis.NumberAxis) plot.getRangeAxis();
+                    rangeAxis.setStandardTickUnits(org.jfree.chart.axis.NumberAxis.createIntegerTickUnits());
                     
                     org.jfree.chart.renderer.category.BarRenderer renderer = 
                         (org.jfree.chart.renderer.category.BarRenderer) plot.getRenderer();

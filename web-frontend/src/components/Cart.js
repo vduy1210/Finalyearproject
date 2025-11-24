@@ -151,13 +151,35 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
   // Handle order submission
   async function handleOrder() {
     setError("");
+    
+    // Validate all required fields
     if (!name || !phone || !email || !tableNumber) {
       setError("Please fill in all information and select a table!");
       return;
     }
-    const emailRegex = /[^@\s]+@[^@\s]+\.[^@\s]+/;
+    
+    // Validate Vietnamese phone format (09/03/07/08/05 + 8 digits)
+    const phoneRegex = /^(09|03|07|08|05)\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      setError("Invalid Vietnamese phone number! Format: 09/03/07/08/05 + 8 digits (e.g., 0901234567)");
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     if (!emailRegex.test(email)) {
-      setError("Invalid email format.");
+      setError("Invalid email format. Expected format: user@example.com");
+      return;
+    }
+    
+    // Validate name length
+    if (name.trim().length < 2) {
+      setError("Name must be at least 2 characters long");
+      return;
+    }
+    
+    if (name.trim().length > 100) {
+      setError("Name cannot exceed 100 characters");
       return;
     }
 
