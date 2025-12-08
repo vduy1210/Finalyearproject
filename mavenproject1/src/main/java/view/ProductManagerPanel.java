@@ -258,12 +258,23 @@ public class ProductManagerPanel extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             int modelRow = productTable.convertRowIndexToModel(selectedViewRow);
             int productId = productIdList.get(modelRow);
-            boolean deleted = ProductDAO.deleteProduct(productId);
-            if (deleted) {
-                JOptionPane.showMessageDialog(this, "Product deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                loadProductData();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to delete product.", "Error", JOptionPane.ERROR_MESSAGE);
+            
+            try {
+                boolean deleted = ProductDAO.deleteProduct(productId);
+                if (deleted) {
+                    JOptionPane.showMessageDialog(this, "Product deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    loadProductData();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete product.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (RuntimeException e) {
+                JOptionPane.showMessageDialog(this, 
+                    "Cannot delete product!\n\n" + 
+                    e.getMessage() + "\n\n" +
+                    "This product has existing orders in the system.\n" +
+                    "To maintain order history, products with orders cannot be deleted.", 
+                    "Delete Restricted", 
+                    JOptionPane.WARNING_MESSAGE);
             }
         }
     }

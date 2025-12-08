@@ -50,6 +50,9 @@ public class RevenueTodayPanel extends JPanel {
 
     // Store product sales for chart
     private final Map<String, Integer> productSales = new LinkedHashMap<>();
+    
+    // Auto-refresh timer
+    private transient javax.swing.Timer refreshTimer;
 
     public RevenueTodayPanel() {
         setBackground(BACKGROUND_COLOR);
@@ -168,6 +171,42 @@ public class RevenueTodayPanel extends JPanel {
         // Load data for default period (Today)
         loadTodayStatsAndChart();
         loadTodayAppOrders();
+        
+        // Start auto-refresh to keep data up-to-date
+        startAutoRefresh();
+    }
+    
+    /**
+     * Auto-refresh mechanism that polls database every 5 seconds
+     * to update revenue stats, chart, and app orders table
+     */
+    private void startAutoRefresh() {
+        // Refresh every 5 seconds (same as DashboardPanel)
+        int delayMs = 5000;
+        if (refreshTimer != null) refreshTimer.stop();
+        
+        refreshTimer = new javax.swing.Timer(delayMs, e -> {
+            // Use SwingWorker to run database queries off EDT
+            new javax.swing.SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    try {
+                        System.out.println("[RevenueTodayPanel] Background refresh starting");
+                        loadTodayStatsAndChart();
+                        loadTodayAppOrders();
+                        System.out.println("[RevenueTodayPanel] Background refresh finished");
+                    } catch (Exception ex) {
+                        System.err.println("[RevenueTodayPanel] Error during auto-refresh: " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                    return null;
+                }
+            }.execute();
+        });
+        
+        refreshTimer.setRepeats(true);
+        refreshTimer.start();
+        System.out.println("[RevenueTodayPanel] Auto-refresh started (interval: 5 seconds)");
     }
 
     private JPanel createCard(String title, String value, Color valueColor, boolean isRevenue) {

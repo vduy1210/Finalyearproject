@@ -8,24 +8,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GetProduct {
-        public static List<Product> getAllProducts() {
-            List<Product> list = new ArrayList<>();
-            String query = "SELECT name, price FROM products";
+    public static List<Product> getAllProducts() {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT id, name, price FROM products";
 
-            try (Connection conn = DatabaseConnector.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(query);
-                 ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = DatabaseConnector.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(query);
+                ResultSet rs = stmt.executeQuery()) {
 
-                while (rs.next()) {
-                    String name = rs.getString("name");
-                    double price = rs.getDouble("price");
-                    list.add(new Product(name, price));
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                double price = rs.getDouble("price");
+                list.add(new Product(id, name, price));
             }
-
-            return list;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    }
 
+        return list;
+    }
+}

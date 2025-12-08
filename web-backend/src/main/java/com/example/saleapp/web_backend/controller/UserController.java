@@ -38,15 +38,12 @@ public class UserController {
             return ResponseEntity.status(400).body("Password cannot be empty");
         }
         
-        System.out.println("Login request: " + email + " - " + password);
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            System.out.println("User not found with email: " + email);
             return ResponseEntity.status(401).body("Invalid email or password");
         }
         // Use BCrypt password verification
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            System.out.println("Password mismatch for user: " + email);
             return ResponseEntity.status(401).body("Invalid email or password");
         }
         return ResponseEntity.ok().body(

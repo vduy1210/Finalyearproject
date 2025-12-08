@@ -69,17 +69,75 @@ public class ProductDAO {
         }
     }
 
-
+    /**
+     * Checks if a product has been ordered (exists in order_details).
+     * 
+     * @param productId The ID of the product to check
+     * @return true if product exists in orders, false otherwise
+     */
+    /**
+     * Deletes a product and any dependent order detail rows.
+     * This performs a cascading delete at the application level so that products
+     * are removed even if they appear in order detail tables.
+     *
+     * NOTE: This will permanently remove order detail rows referencing the product.
+     */
     public static boolean deleteProduct(int id) {
-        String sql = "DELETE FROM products WHERE id = ?";
+        Connection conn = null;
+        try {
+            conn = DatabaseConnector.getConnection();
+            conn.setAutoCommit(false);
 
-        try (Connection conn = DatabaseConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            // Delete dependent rows in order detail tables first if they exist
+            if (tableExists(conn, "app_order_details")) {
+                try (PreparedStatement pst = conn.prepareStatement("DELETE FROM app_order_details WHERE product_id = ?")) {
+                    pst.setInt(1, id);
+                    pst.executeUpdate();
+                }
+            }
 
-            stmt.setInt(1, id);
-            int rowsDeleted = stmt.executeUpdate();
+            if (tableExists(conn, "web_order_details")) {
+                try (PreparedStatement pst = conn.prepareStatement("DELETE FROM web_order_details WHERE product_id = ?")) {
+                    pst.setInt(1, id);
+                    pst.executeUpdate();
+                }
+            }
+
+            if (tableExists(conn, "order_items")) {
+                try (PreparedStatement pst = conn.prepareStatement("DELETE FROM order_items WHERE product_id = ?")) {
+                    pst.setInt(1, id);
+                    pst.executeUpdate();
+                }
+            }
+
+            // Finally delete the product row
+            int rowsDeleted = 0;
+            try (PreparedStatement pst = conn.prepareStatement("DELETE FROM products WHERE id = ?")) {
+                pst.setInt(1, id);
+                rowsDeleted = pst.executeUpdate();
+            }
+
+            conn.commit();
             return rowsDeleted > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+        }
+    }
 
+    private static boolean tableExists(Connection conn, String tableName) {
+        try {
+            DatabaseMetaData meta = conn.getMetaData();
+            try (ResultSet rs = meta.getTables(null, null, tableName, new String[]{"TABLE"})) {
+                return rs.next();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -107,6 +165,7 @@ public class ProductDAO {
         return null; // Trả về null nếu không tìm thấy
     }
     public static boolean addProduct(String name, double price, int stock) {
+        // rely on is_deleted default = 0
         String sql = "INSERT INTO products (name, price, stock) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

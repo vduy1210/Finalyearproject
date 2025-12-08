@@ -1,0 +1,131 @@
+@startuml Use Case Diagram - Shop Management System
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Customer\n(User)" as Customer
+actor "Staff" as Staff
+actor "Admin" as Admin
+
+rectangle "Shop Management System" {
+  
+  ' Customer Use Cases
+  package "Customer Features" {
+    usecase "Register Account" as UC1
+    usecase "Login" as UC2
+    usecase "View Products" as UC3
+    usecase "Search Products" as UC4
+    usecase "Add to Cart" as UC5
+    usecase "View Cart" as UC6
+    usecase "Place Order" as UC7
+    usecase "View Order History" as UC8
+    usecase "Track Order Status" as UC9
+    usecase "Update Profile" as UC10
+    usecase "Change Password" as UC11
+  }
+  
+  ' Staff Use Cases
+  package "Staff Features" {
+    usecase "Manage Products" as UC12
+    usecase "Add Product" as UC13
+    usecase "Edit Product" as UC14
+    usecase "Delete Product" as UC15
+    usecase "View Orders" as UC16
+    usecase "Update Order Status" as UC17
+    usecase "View Customer List" as UC18
+    usecase "Generate Reports" as UC19
+  }
+  
+  ' Admin Use Cases
+  package "Admin Features" {
+    usecase "Manage Users" as UC20
+    usecase "Add User" as UC21
+    usecase "Edit User" as UC22
+    usecase "Delete User" as UC23
+    usecase "Assign User Tier" as UC24
+    usecase "Manage Categories" as UC25
+    usecase "View System Statistics" as UC26
+    usecase "Manage Notifications" as UC27
+    usecase "System Configuration" as UC28
+  }
+  
+  ' Shared Use Cases
+  package "Common Features" {
+    usecase "View Dashboard" as UC29
+    usecase "Logout" as UC30
+  }
+}
+
+' Customer Relationships
+Customer --> UC1
+Customer --> UC2
+Customer --> UC3
+Customer --> UC4
+Customer --> UC5
+Customer --> UC6
+Customer --> UC7
+Customer --> UC8
+Customer --> UC9
+Customer --> UC10
+Customer --> UC11
+Customer --> UC30
+
+' Staff Relationships
+Staff --> UC2
+Staff --> UC12
+Staff --> UC16
+Staff --> UC17
+Staff --> UC18
+Staff --> UC19
+Staff --> UC29
+Staff --> UC30
+
+' Admin Relationships
+Admin --> UC2
+Admin --> UC20
+Admin --> UC24
+Admin --> UC25
+Admin --> UC26
+Admin --> UC27
+Admin --> UC28
+Admin --> UC29
+Admin --> UC30
+
+' Include/Extend Relationships
+UC12 .> UC13 : <<include>>
+UC12 .> UC14 : <<include>>
+UC12 .> UC15 : <<include>>
+
+UC20 .> UC21 : <<include>>
+UC20 .> UC22 : <<include>>
+UC20 .> UC23 : <<include>>
+
+UC7 .> UC2 : <<include>>
+UC8 .> UC2 : <<include>>
+
+' Inheritance
+Staff --|> Customer : extends
+Admin --|> Staff : extends
+
+note right of Customer
+  - Can browse products
+  - Can place orders
+  - Can track order status
+  - Basic user features
+end note
+
+note right of Staff
+  - Has all Customer features
+  - Can manage products
+  - Can process orders
+  - Can view reports
+end note
+
+note right of Admin
+  - Has all Staff features
+  - Full system access
+  - User management
+  - System configuration
+end note
+
+@enduml

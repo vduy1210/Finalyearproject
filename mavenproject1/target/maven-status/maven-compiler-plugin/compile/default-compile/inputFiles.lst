@@ -1,4 +1,5 @@
 E:\Final\Finalyearproject\mavenproject1\src\main\java\dao\AppOrderDao.java
+E:\Final\Finalyearproject\mavenproject1\src\main\java\dao\CustomerTierDAO.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\dao\GetProduct.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\dao\OrderDao.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\dao\ProductDAO.java
@@ -7,11 +8,16 @@ E:\Final\Finalyearproject\mavenproject1\src\main\java\dao\WebOrderDao.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\database\DatabaseConnector.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\Main.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\model\customer.java
+E:\Final\Finalyearproject\mavenproject1\src\main\java\model\CustomerTier.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\model\Order.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\model\OrderDetails.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\model\Product.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\model\user.java
+E:\Final\Finalyearproject\mavenproject1\src\main\java\util\PasswordMigration.java
+E:\Final\Finalyearproject\mavenproject1\src\main\java\util\PasswordUtil.java
+E:\Final\Finalyearproject\mavenproject1\src\main\java\util\UIUtils.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\CustomerInfoDialog.java
+E:\Final\Finalyearproject\mavenproject1\src\main\java\view\CustomerManagementPanel.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\DashboardPanel.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\LoginForm.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\MainApplication.java
@@ -19,7 +25,8 @@ E:\Final\Finalyearproject\mavenproject1\src\main\java\view\OrderConfirmationPane
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\OrderPanel.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\ProductDialog.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\ProductManagerPanel.java
-E:\Final\Finalyearproject\mavenproject1\src\main\java\view\RegisterForm.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\RevenueReportPanel.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\RevenueTodayPanel.java
+E:\Final\Finalyearproject\mavenproject1\src\main\java\view\RoundedButton.java
+E:\Final\Finalyearproject\mavenproject1\src\main\java\view\TierConfigDialog.java
 E:\Final\Finalyearproject\mavenproject1\src\main\java\view\UserManagementPanel.java

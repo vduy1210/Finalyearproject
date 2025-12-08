@@ -20,9 +20,14 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                    // Development: Allow React dev server
+                    // Development: Allow React dev server from localhost and local network
                     // Production: Change to your production domain (e.g., "https://yourdomain.com")
-                    .allowedOrigins("http://localhost:3000")
+                    .allowedOriginPatterns(
+                        "http://localhost:*",
+                        "http://127.0.0.1:*",
+                        "http://192.168.*.*:*",
+                        "http://10.*.*.*:*"
+                    )
                     .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                     .allowedHeaders("*")
                     .allowCredentials(true)

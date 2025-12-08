@@ -169,21 +169,13 @@ public class ProductController {
             // 2. Create the uploads directory if it doesn't exist
             Path uploadPath = Paths.get(uploadDir);
             Files.createDirectories(uploadPath);
-            
-            // Debug: Log the upload directory
-            System.out.println("Upload directory: " + uploadPath.toAbsolutePath());
-            System.out.println("Directory exists: " + Files.exists(uploadPath));
-            System.out.println("Directory is writable: " + Files.isWritable(uploadPath));
 
             // 3. Create a unique filename
             String filename = "product_" + id + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
             Path filePath = Paths.get(uploadDir, filename);
 
             // 4. Save the file to disk
-            System.out.println("Saving file to: " + filePath.toAbsolutePath());
             Files.write(filePath, file.getBytes());
-            System.out.println("File saved successfully. File exists: " + Files.exists(filePath));
-            System.out.println("File size: " + Files.size(filePath) + " bytes");
 
             // 5. Update the product's imageUrl in the database
             Product product = productRepository.findById(id).orElse(null);

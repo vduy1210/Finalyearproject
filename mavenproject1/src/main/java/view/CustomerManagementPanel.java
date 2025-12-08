@@ -14,12 +14,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.swing.Timer;
 
 public class CustomerManagementPanel extends JPanel {
     private DefaultTableModel model;
     private JTable table;
     private JTextField searchField;
     private java.text.NumberFormat currencyFormat = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.of("vi","VN"));
+    private Timer refreshTimer;
     
     // Stat card labels to update
     private JLabel totalCustomersValue;
@@ -187,6 +189,37 @@ public class CustomerManagementPanel extends JPanel {
 
         // initial load
         loadCustomers();
+        
+        // Auto-refresh timer: refresh every 30 seconds
+        refreshTimer = new Timer(30000, new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshCustomerData();
+            }
+        });
+        refreshTimer.start();
+    }
+    
+    /**
+     * Public method to manually refresh customer data
+     * Can be called from other panels when a new customer is added
+     */
+    public void refreshCustomerData() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                loadCustomers();
+            }
+        });
+    }
+    
+    /**
+     * Stop the auto-refresh timer when panel is disposed
+     */
+    public void stopAutoRefresh() {
+        if (refreshTimer != null && refreshTimer.isRunning()) {
+            refreshTimer.stop();
+        }
     }
 
     private void loadCustomers() {

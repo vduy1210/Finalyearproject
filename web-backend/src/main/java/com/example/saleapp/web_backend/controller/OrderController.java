@@ -22,110 +22,189 @@ public class OrderController {
     @Autowired
     private CustomerRepository customerRepository;
 
+    /**
+     * Place a new order with comprehensive validation and stock management.
+     * This method handles:
+     * - Input validation (phone, email, name, table number)
+     * - Customer lookup/creation with conflict detection
+     * - Two-phase stock validation and update
+     * - Order and order items creation
+     * 
+     * @param orderRequest The order request containing customer info and items
+     * @return ResponseEntity with success status and orderId, or error message
+     */
     @PostMapping
+    @org.springframework.transaction.annotation.Transactional // Đánh dấu method này là một giao dịch (transaction). Nếu
+                                                              // có lỗi xảy ra ở bất kỳ bước nào, toàn bộ thay đổi db sẽ
+                                                              // bị rollback (hoàn tác).
     public ResponseEntity<?> placeOrder(@RequestBody OrderRequest orderRequest) {
         try {
-            // Input validation
+            // ============================================================
+            // BƯỚC 1: KIỂM TRA DỮ LIỆU ĐẦU VÀO (INPUT VALIDATION)
+            // ============================================================
+            // Kiểm tra tính hợp lệ của số điện thoại, email, tên để tránh lỗi hoặc tấn công
+            // injection.
             InputValidator.validatePhone(orderRequest.getPhone());
             InputValidator.validateEmail(orderRequest.getEmail());
             String safeName = InputValidator.validateAndSanitizeName(orderRequest.getName());
             InputValidator.validateTableNumber(orderRequest.getTableNumber());
-            
-            // 1) Find or create customer by phone (more unique identifier)
-            Customer customer = customerRepository.findByPhone(orderRequest.getPhone())
-                    .orElseGet(() -> {
-                        Customer c = new Customer();
-                        c.setName(safeName); // Use sanitized name
-                        c.setPhone(orderRequest.getPhone());
-                        c.setEmail(orderRequest.getEmail());
-                        c.setAccumulatedPoint(0.0);
-                        return customerRepository.save(c);
-                    });
 
-            // 2) Update customer information if needed
-            if (!customer.getName().equals(safeName) || 
-                !customer.getEmail().equals(orderRequest.getEmail())) {
-                customer.setName(safeName); // Use sanitized name
+            // ============================================================
+            // BƯỚC 2: XỬ LÝ THÔNG TIN KHÁCH HÀNG (CUSTOMER LOOKUP/CONFLICT)
+            // ============================================================
+            // Tìm khách hàng trong database dựa trên SĐT hoặc Email
+            Optional<Customer> existingByPhone = customerRepository.findByPhone(orderRequest.getPhone());
+            Optional<Customer> existingByEmail = customerRepository.findByEmail(orderRequest.getEmail());
+            Customer customer = null;
+
+            // ============================================================
+            // TRƯỜNG HỢP 1: Số điện thoại đã tồn tại
+            // ============================================================
+            if (existingByPhone.isPresent()) {
+                Customer customerByPhone = existingByPhone.get();
+
+                // Kiểm tra xem tên và email nhập vào có khớp với dữ liệu đã lưu không.
+                // Điều này ngăn chặn việc sử dụng SĐT của người khác để đặt hàng.
+                boolean nameMatches = customerByPhone.getName().equalsIgnoreCase(safeName.trim());
+                boolean emailMatches = customerByPhone.getEmail().equalsIgnoreCase(orderRequest.getEmail().trim());
+
+                if (!nameMatches || !emailMatches) {
+                    // Nếu thông tin không khớp, trả về lỗi chi tiết để người dùng biết.
+                    // Fix UX: Thông báo rõ ràng về việc trùng lặp thông tin.
+                    return ResponseEntity.badRequest().body(Map.of(
+                            "success", false,
+                            "error", "❌ Số điện thoại này đã được đăng ký với thông tin khác\n" +
+                                    "⚠️ Vui lòng sử dụng đúng thông tin đã đăng ký hoặc dùng số điện thoại khác.",
+                            "conflictType", "phone_mismatch", // Frontend dựa vào key này để xử lý hiển thị
+                            "existingCustomer", Map.of(
+                                    "name", customerByPhone.getName(),
+                                    "email", customerByPhone.getEmail(),
+                                    "phone", customerByPhone.getPhone())));
+                }
+
+                // Nếu thông tin khớp, sử dụng khách hàng hiện có.
+                customer = customerByPhone;
+            }
+            // ============================================================
+            // TRƯỜNG HỢP 2: Email đã tồn tại nhưng SĐT khác (Trùng Email)
+            // ============================================================
+            else if (existingByEmail.isPresent()) {
+                Customer customerByEmail = existingByEmail.get();
+
+                // Ngăn chặn việc một email được đăng ký cho nhiều SĐT khác nhau (bảo mật tài
+                // khoản).
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "error", "❌ Email này đã được đăng ký với số điện thoại khác\n" +
+                                "⚠️ Vui lòng sử dụng đúng số điện thoại đã đăng ký hoặc dùng email khác.",
+                        "conflictType", "email_mismatch",
+                        "existingCustomer", Map.of(
+                                "name", customerByEmail.getName(),
+                                "email", customerByEmail.getEmail(),
+                                "phone", customerByEmail.getPhone())));
+            }
+            // ============================================================
+            // TRƯỜNG HỢP 3: Khách hàng mới hoàn toàn
+            // ============================================================
+            else {
+                // Tạo mới đối tượng Customer và lưu vào DB.
+                customer = new Customer();
+                customer.setName(safeName);
+                customer.setPhone(orderRequest.getPhone());
                 customer.setEmail(orderRequest.getEmail());
-                customerRepository.save(customer);
+                customer.setAccumulatedPoint(0.0); // Điểm tích lũy ban đầu là 0
+                customer = customerRepository.save(customer);
             }
 
-            // 3) Get default staff user (assuming staff ID 1 exists)
+            // ============================================================
+            // BƯỚC 3: LẤY NHÂN VIÊN MẶC ĐỊNH
+            // ============================================================
+            // Gán đơn hàng cho nhân viên mặc định (ID=1) để theo dõi.
             User defaultStaff = userRepository.findById(1).orElse(null);
             if (defaultStaff == null) {
                 return ResponseEntity.status(500).body("Default staff not found");
             }
 
-            // 4) Build order
+            // ============================================================
+            // BƯỚC 4: KHỞI TẠO ĐỐI TƯỢNG ORDER
+            // ============================================================
             Order order = new Order();
             order.setCustomer(customer);
-            order.setStaff(defaultStaff); // Set staff_id
+            order.setStaff(defaultStaff);
             order.setShippingName(orderRequest.getName());
             order.setShippingPhone(orderRequest.getPhone());
             order.setShippingEmail(orderRequest.getEmail());
-            order.setStatus("Pending");
+            order.setStatus("Pending"); // Trạng thái ban đầu là Pending (Chờ xử lý)
             order.setOrderDate(LocalDateTime.now());
-            
-            // Add table number if available
+
             if (orderRequest.getTableNumber() != null && !orderRequest.getTableNumber().trim().isEmpty()) {
                 order.setTableNumber(orderRequest.getTableNumber());
             }
 
             double total = 0.0;
             List<OrderItem> orderItems = new ArrayList<>();
-            
-            // First pass: Validate stock availability
-            for (OrderRequest.OrderItemRequest item : orderRequest.getItems()) {
-                Optional<Product> productOpt = productRepository.findById(item.getProductId());
-                if (productOpt.isEmpty()) {
-                    return ResponseEntity.badRequest().body("Product not found with ID: " + item.getProductId());
-                }
-                Product product = productOpt.get();
-                
-                if (product.getStock() < item.getQuantity()) {
-                    return ResponseEntity.badRequest().body(
-                        "Insufficient stock for product: " + product.getName() + 
-                        ". Available: " + product.getStock() + 
-                        ", Requested: " + item.getQuantity()
-                    );
-                }
-            }
-            
-            // Second pass: Process order and update stock
-            for (OrderRequest.OrderItemRequest item : orderRequest.getItems()) {
-                Optional<Product> productOpt = productRepository.findById(item.getProductId());
-                if (productOpt.isEmpty()) continue;
-                Product product = productOpt.get();
 
-                // Update stock: subtract ordered quantity
-                int newStock = product.getStock() - item.getQuantity();
-                product.setStock(newStock);
-                productRepository.save(product); // Save updated stock
+            // ============================================================
+            // BƯỚC 5: XÁC THỰC VÀ CẬP NHẬT TỒN KHO (QUAN TRỌNG)
+            // Fix Bug 4 (Race Condition) & Bug 1 (Price Manipulation)
+            // ============================================================
 
+            for (OrderRequest.OrderItemRequest item : orderRequest.getItems()) {
+                // Fix Bug 1: Lấy giá sản phẩm TRỰC TIẾP từ Database thay vì tin tưởng giá từ
+                // Frontend gửi lên.
+                // Frontend có thể bị chỉnh sửa, nên giá phải luôn lấy từ server.
+                Product product = productRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProductId()));
+
+                // Fix Bug 4: Cập nhật tồn kho (Atomic Update).
+                // Thực hiện trừ tồn kho ngay trong câu lệnh SQL UPDATE để đảm bảo tính toàn vẹn
+                // dữ liệu
+                // khi có nhiều người cùng mua một lúc (Concurrency).
+                // decrementStock trả về số dòng được update (1 nếu thành công, 0 nếu không đủ
+                // hàng).
+                int rowsUpdated = productRepository.decrementStock(item.getProductId(), item.getQuantity());
+
+                if (rowsUpdated == 0) {
+                    // Nếu trả về 0 nghĩa là hế hàng (stock < quantity yêu cầu).
+                    // Ném lỗi RuntimeException để kích hoạt rollback transaction bên trên.
+                    throw new RuntimeException("Insufficient stock for product: " + product.getName());
+                }
+
+                // Tạo OrderItem với giá SERVER-SIDE
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);
                 orderItem.setProduct(product);
                 orderItem.setQuantity(item.getQuantity());
-                orderItem.setPrice(item.getPrice());
-                total += item.getPrice() * item.getQuantity();
+                orderItem.setPrice(product.getPrice()); // Sử dụng giá DB
+
+                total += product.getPrice() * item.getQuantity();
                 orderItems.add(orderItem);
             }
 
+            // Cập nhật tổng tiền cuối cùng
             order.setTotal(total);
-            order.setTotalAmount(total); // Set total_amount field
-            order.setItems(orderItems);
-            
-            // Save order first to get the order_id
+            order.setTotalAmount(total);
+            order.setItems(orderItems); // Hibernate sẽ tự động lưu OrderItem nhờ CascadeType.ALL
+
+            // ============================================================
+            // BƯỚC 6: LƯU ĐƠN HÀNG VÀO DATABASE
+            // ============================================================
             Order savedOrder = orderRepository.save(order);
-            
-            // Save order items (web_order_details)
+
+            // Gán lại quan hệ ngược chiều nếu cần thiết (dù Cascade đã lo)
             for (OrderItem item : orderItems) {
                 item.setOrder(savedOrder);
             }
-            // The items will be saved automatically due to CascadeType.ALL
+
+            // Trả về kết quả thành công kèm Order ID
             return ResponseEntity.ok(Map.of("success", true, "orderId", savedOrder.getId()));
+
         } catch (Exception e) {
+            // Log lỗi ra console
             e.printStackTrace();
+            // Nếu có bất kỳ lỗi nào (ví dụ hết hàng), Transaction sẽ rollback (hoàn trả
+            // trạng thái cũ).
+            // Trả về lỗi 500 cho Frontend.
             return ResponseEntity.status(500).body("Error placing order: " + e.getMessage());
         }
     }
@@ -133,7 +212,8 @@ public class OrderController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<?> getOrdersByUser(@PathVariable Integer userId) {
         Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) return ResponseEntity.badRequest().body("User not found");
+        if (userOpt.isEmpty())
+            return ResponseEntity.badRequest().body("User not found");
         User user = userOpt.get();
         List<Order> orders = orderRepository.findByUser(user);
         return ResponseEntity.ok(orders);

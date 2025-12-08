@@ -22,7 +22,7 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
 
   // Available tables list
   const availableTables = [
-    "Table 1", "Table 2", "Table 3", "Table 4", "Table 5", 
+    "Table 1", "Table 2", "Table 3", "Table 4", "Table 5",
     "Table 6", "Table 7", "Table 8", "Table 9", "Table 10"
   ];
 
@@ -151,33 +151,33 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
   // Handle order submission
   async function handleOrder() {
     setError("");
-    
+
     // Validate all required fields
     if (!name || !phone || !email || !tableNumber) {
       setError("Please fill in all information and select a table!");
       return;
     }
-    
+
     // Validate Vietnamese phone format (09/03/07/08/05 + 8 digits)
     const phoneRegex = /^(09|03|07|08|05)\d{8}$/;
     if (!phoneRegex.test(phone)) {
       setError("Invalid Vietnamese phone number! Format: 09/03/07/08/05 + 8 digits (e.g., 0901234567)");
       return;
     }
-    
+
     // Validate email format
     const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     if (!emailRegex.test(email)) {
       setError("Invalid email format. Expected format: user@example.com");
       return;
     }
-    
+
     // Validate name length
     if (name.trim().length < 2) {
       setError("Name must be at least 2 characters long");
       return;
     }
-    
+
     if (name.trim().length > 100) {
       setError("Name cannot exceed 100 characters");
       return;
@@ -205,12 +205,87 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
+
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Order failed");
+        const contentType = res.headers.get("content-type");
+        let errorData;
+
+        // Try to parse JSON error response first
+        if (contentType && contentType.includes("application/json")) {
+          errorData = await res.json();
+
+          // Handle customer mismatch errors specifically
+          if (errorData.conflictType === "phone_mismatch") {
+            const existingCustomer = errorData.existingCustomer;
+            setError(
+              `❌ Số điện thoại này đã được đăng ký với thông tin khác:\n\n` +
+              `📋 Thông tin đã đăng ký:\n` +
+              `• Tên: ${existingCustomer.name}\n` +
+              `• Email: ${existingCustomer.email}\n` +
+              `• SĐT: ${existingCustomer.phone}\n\n` +
+              `⚠️ Vui lòng sử dụng đúng thông tin đã đăng ký hoặc dùng số điện thoại khác.`
+            );
+
+            notification.error(
+              "Số điện thoại đã tồn tại",
+              `Số điện thoại ${existingCustomer.phone} đã được đăng ký với tên "${existingCustomer.name}" và email "${existingCustomer.email}"`,
+              { conflictType: "phone_mismatch", existingCustomer: existingCustomer }
+            );
+
+            setSubmitting(false);
+            return;
+          }
+          else if (errorData.conflictType === "email_mismatch") {
+            const existingCustomer = errorData.existingCustomer;
+            setError(
+              `❌ Email này đã được đăng ký với số điện thoại khác:\n\n` +
+              `📋 Thông tin đã đăng ký:\n` +
+              `• Tên: ${existingCustomer.name}\n` +
+              `• SĐT: ${existingCustomer.phone}\n` +
+              `• Email: ${existingCustomer.email}\n\n` +
+              `⚠️ Vui lòng sử dụng đúng số điện thoại đã đăng ký hoặc dùng email khác.`
+            );
+
+            notification.error(
+              "Email đã tồn tại",
+              `Email ${existingCustomer.email} đã được đăng ký với tên "${existingCustomer.name}" và số điện thoại "${existingCustomer.phone}"`,
+              { conflictType: "email_mismatch", existingCustomer: existingCustomer }
+            );
+
+            setSubmitting(false);
+            return;
+          }
+          else if (errorData.conflictType === "customer_mismatch") {
+            const existingCustomer = errorData.existingCustomer;
+            setError(
+              `❌ Thông tin không khớp với tài khoản đã đăng ký:\n\n` +
+              `📋 Thông tin đã đăng ký:\n` +
+              `• Tên: ${existingCustomer.name}\n` +
+              `• Email: ${existingCustomer.email}\n` +
+              `• SĐT: ${existingCustomer.phone}\n\n` +
+              `⚠️ Vui lòng nhập đúng thông tin đã đăng ký.`
+            );
+
+            notification.error(
+              "Thông tin khách hàng không khớp",
+              `Thông tin bạn nhập không khớp với tài khoản đã đăng ký.`,
+              { conflictType: "customer_mismatch", existingCustomer: existingCustomer }
+            );
+
+            setSubmitting(false);
+            return;
+          }
+
+          throw new Error(errorData.error || errorData.message || "Order failed");
+        } else {
+          // Fallback to text error
+          const text = await res.text();
+          throw new Error(text || "Order failed");
+        }
       }
+
       const data = await res.json();
-      
+
       // Show success notification with order details
       notification.orderPlaced({
         orderId: data.orderId,
@@ -227,7 +302,7 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
       // Clear form and cart
       if (clearCart) clearCart();
       handleCloseDialog();
-      
+
       // Show additional success message in console for debugging
       console.log("Order placed successfully:", {
         orderId: data.orderId,
@@ -235,10 +310,10 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
         customer: name,
         total
       });
-      
+
     } catch (e) {
       setError(e.message || "Order failed. Please try again!");
-      
+
       // Show error notification
       notification.error(
         "Order Failed",
@@ -258,21 +333,21 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
   function getImageUrl(item) {
     if (!item.imageUrl) return null;
     if (item.imageUrl.startsWith('http')) return item.imageUrl;
-    
+
     // Use dynamic hostname for mobile access
     const hostname = window.location.hostname;
     const backendPort = '8081'; // Always use backend port, not frontend port
-    
+
     // Handle URL encoding issues
     let cleanUrl = item.imageUrl;
     // Note: Removed corrupted URL check as unicode characters are valid
-    
+
     const imageUrl = `http://${hostname}:${backendPort}${encodeURI(cleanUrl)}`;
-    
+
     // Debug logging
     console.log('Image URL for', item.name, ':', imageUrl);
     console.log('Original imageUrl from database:', item.imageUrl);
-    
+
     // Return image URL with error handling
     return imageUrl;
   }
@@ -288,15 +363,15 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
     <Box display="flex" justifyContent="center" alignItems="flex-start" minHeight="60vh" style={{ background: "#f5f7fa" }}>
       <Paper elevation={3} sx={{ p: 4, width: window.innerWidth < 600 ? "98vw" : 620, maxWidth: 680, margin: window.innerWidth < 600 ? "8px auto" : undefined, borderRadius: 18, boxShadow: "0 4px 24px rgba(44,62,80,0.08)", fontFamily: 'Roboto, Arial, sans-serif', background: "#f5f7fa", display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography variant="h4" gutterBottom fontSize={window.innerWidth < 600 ? 26 : 22} fontWeight={800} color="#1976d2" textAlign="center" mb={3} fontFamily="'Roboto, Arial, sans-serif'">Cart</Typography>
-        
+
         {/* Product list */}
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
           {cart.map((item, idx) => (
             <div key={idx} style={{ ...productCardStyle, width: '100%', maxWidth: 400 }}>
               {item.imageUrl ? (
-                <img 
-                  src={getImageUrl(item)} 
-                  alt={item.name} 
+                <img
+                  src={getImageUrl(item)}
+                  alt={item.name}
                   style={imageStyle}
                   onError={(e) => {
                     console.log('Image load error for', item.name, ':', e.target.src);
@@ -310,12 +385,12 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
                   }}
                 />
               ) : null}
-              <div style={{...placeholderStyle, display: item.imageUrl ? 'none' : 'flex'}}>
-                <div style={{textAlign: 'center', color: '#90a4ae', fontSize: '12px'}}>
-                  <div style={{fontSize: '24px', marginBottom: '4px'}}>📷</div>
+              <div style={{ ...placeholderStyle, display: item.imageUrl ? 'none' : 'flex' }}>
+                <div style={{ textAlign: 'center', color: '#90a4ae', fontSize: '12px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '4px' }}>📷</div>
                   <div>No Image</div>
                   {item.imageUrl && (
-                    <div style={{fontSize: '10px', marginTop: '4px', color: '#bbb'}}>
+                    <div style={{ fontSize: '10px', marginTop: '4px', color: '#bbb' }}>
                       URL: {item.imageUrl}
                     </div>
                   )}
@@ -323,10 +398,10 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
               </div>
               <div style={infoStyle}>
                 <div style={nameStyle}>{item.name}</div>
-                <div style={priceStyle}>Price: {item.price.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}</div>
-                <div style={{display: 'flex', alignItems: 'center', gap: 8, marginTop: 8}}>
+                <div style={priceStyle}>Price: {item.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
                   <span style={qtyStyle}>Quantity:</span>
-                  <div style={{display: 'flex', alignItems: 'center', gap: 4}}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <button
                       style={{
                         background: '#f5f5f5',
@@ -390,8 +465,8 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
         {cart.length > 0 && (
           <div style={{ width: '100%', marginTop: 24, textAlign: 'center' }}>
             <Typography variant="body2" sx={{ mt: 1 }} style={totalStyle}>Total Items: {totalItems}</Typography>
-            <Typography variant="body2" sx={{ mt: 0.5 }} style={totalStyle}>Total Amount: {total.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}</Typography>
-            
+            <Typography variant="body2" sx={{ mt: 0.5 }} style={totalStyle}>Total Amount: {total.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</Typography>
+
             <button
               onClick={handleOpenDialog}
               style={{ ...orderButtonStyle, ...(orderHover ? orderButtonHover : {}) }}
@@ -425,41 +500,57 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
             </FormControl>
 
             {/* Customer information */}
-            <TextField 
-              label="Full Name" 
-              value={name} 
-              onChange={(e)=>setName(e.target.value)} 
-              fullWidth 
-              size="small" 
-              margin="dense" 
+            <TextField
+              label="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+              size="small"
+              margin="dense"
               sx={{ mb: 2 }}
             />
-            <TextField 
-              label="Phone Number" 
-              value={phone} 
-              onChange={(e)=>setPhone(e.target.value)} 
-              fullWidth 
-              size="small" 
-              margin="dense" 
+            <TextField
+              label="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              fullWidth
+              size="small"
+              margin="dense"
               sx={{ mb: 2 }}
             />
-            <TextField 
-              label="Email" 
-              value={email} 
-              onChange={(e)=>setEmail(e.target.value)} 
-              fullWidth 
-              size="small" 
-              margin="dense" 
+            <TextField
+              label="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              fullWidth
+              size="small"
+              margin="dense"
               sx={{ mb: 2 }}
             />
             {error && (
-              <Typography color="error" fontSize={14} mt={1}>{error}</Typography>
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  bgcolor: '#ffebee',
+                  borderRadius: 1,
+                  border: '1px solid #ef5350'
+                }}
+              >
+                <Typography
+                  color="error"
+                  fontSize={14}
+                  sx={{ whiteSpace: 'pre-line', fontWeight: 500 }}
+                >
+                  {error}
+                </Typography>
+              </Box>
             )}
           </DialogContent>
           <DialogActions sx={{ p: 3, justifyContent: "center" }}>
-            <Button 
-              onClick={handleCloseDialog} 
-              variant="outlined" 
+            <Button
+              onClick={handleCloseDialog}
+              variant="outlined"
               color="primary"
               sx={{ mr: 2 }}
             >
@@ -470,7 +561,7 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
               variant="contained"
               color="primary"
               disabled={submitting}
-              sx={{ 
+              sx={{
                 background: "#1976d2",
                 "&:hover": { background: "#64b5f6" }
               }}
