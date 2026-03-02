@@ -65,6 +65,20 @@ public class AppOrderDao {
                     psDetail.executeBatch(); // Thực thi lô lệnh
                 }
 
+                // 4. Cập nhật điểm tích lũy cho khách hàng (Loyalty Points)
+                // Logic: Cộng cố định 10 điểm cho mỗi đơn hàng (Theo yêu cầu)
+                if (order.getCustomerId() > 0) {
+                    try (PreparedStatement psUpdatePoints = conn.prepareStatement(
+                            "UPDATE customers SET accumulatedPoint = accumulatedPoint + ? WHERE id = ?")) {
+                        double pointsEarned = 10.0;
+                        psUpdatePoints.setDouble(1, pointsEarned);
+                        psUpdatePoints.setInt(2, order.getCustomerId());
+                        psUpdatePoints.executeUpdate();
+                        System.out.println(
+                                "Updated loyalty points for customer " + order.getCustomerId() + ": +" + pointsEarned);
+                    }
+                }
+
                 // 4. Cập nhật tồn kho sản phẩm
                 try (PreparedStatement psUpdateStock = conn.prepareStatement(sqlUpdateStock)) {
                     for (OrderDetails detail : details) {

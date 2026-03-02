@@ -8,7 +8,8 @@ function ProductManagerPanel() {
 
   // Fetch products from backend
   function fetchProducts() {
-    fetch("http://localhost:8081/api/products")
+    const hostname = window.location.hostname;
+    fetch(`http://${hostname}:8081/api/products`)
       .then(res => res.json())
       .then(data => setProducts(data));
   }
@@ -20,9 +21,9 @@ function ProductManagerPanel() {
   // Scroll to edit form when product is selected
   useEffect(() => {
     if (selectedProduct && editFormRef.current) {
-      editFormRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'nearest' 
+      editFormRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
       });
     }
   }, [selectedProduct]);
@@ -132,7 +133,7 @@ function ProductManagerPanel() {
             <div style={cardStyle}>
               {product.imageUrl ? (
                 <img
-                  src={`http://localhost:8081${encodeURI(product.imageUrl)}`}
+                  src={`http://${window.location.hostname}:8081${encodeURI(product.imageUrl)}`}
                   alt={product.name}
                   style={imageStyle}
                 />

@@ -20,18 +20,18 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                    // Development: Allow React dev server from localhost and local network
-                    // Production: Change to your production domain (e.g., "https://yourdomain.com")
-                    .allowedOriginPatterns(
-                        "http://localhost:*",
-                        "http://127.0.0.1:*",
-                        "http://192.168.*.*:*",
-                        "http://10.*.*.*:*"
-                    )
-                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .allowedHeaders("*")
-                    .allowCredentials(true)
-                    .maxAge(3600); // Cache preflight response for 1 hour
+                        // Development: Allow React dev server from localhost and local network
+                        // Production: Change to your production domain (e.g., "https://yourdomain.com")
+                        .allowedOriginPatterns(
+                                "http://localhost:*",
+                                "http://127.0.0.1:*",
+                                "http://192.168.*.*:*",
+                                "http://10.*.*.*:*",
+                                "http://172.*.*.*:*")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true)
+                        .maxAge(3600); // Cache preflight response for 1 hour
             }
         };
     }

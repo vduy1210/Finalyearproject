@@ -148,9 +148,6 @@ public class OrderPanel extends JPanel {
         }
         try {
             Connection conn = database.DatabaseConnector.getConnection();
-            // Note: This query assumes web_order_details matches product IDs correctly.
-            // If fetching from web order, we map by ID.
-            // We need to ensure we have the ID for the cart.
             String sql = "SELECT od.product_id, p.name AS product_name, od.quantity, od.price FROM web_order_details od "
                     +
                     "JOIN products p ON od.product_id = p.id WHERE od.order_id = ?";
@@ -447,32 +444,32 @@ public class OrderPanel extends JPanel {
     private void handleAddToCart() {
         int selectedRow = productTable.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một sản phẩm để thêm!", "Chưa chọn sản phẩm",
+            JOptionPane.showMessageDialog(this, "Please select a product to add!", "No Selection",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Fix Bug 6: Sử dụng danh sách loadedProducts để lấy đối tượng Product
-        // Thay vì chỉ lấy tên từ bảng, ta lấy object Product để truy cập được ID chính
-        // xác.
+        // Bug 6 Fix: Use loadedProducts list to get the Product object
+        // Instead of getting name from table, get Product object to access the correct
+        // ID.
         if (loadedProducts == null || selectedRow >= loadedProducts.size()) {
             return;
         }
         Product selectedProduct = loadedProducts.get(selectedRow);
 
-        // Quan trọng: Lấy ID từ object Product đã load từ DB
+        // Important: Get ID from the Product object loaded from DB
         int productId = selectedProduct.getId();
         String productName = selectedProduct.getName();
         double price = selectedProduct.getPrice();
 
         int quantityToAdd = (Integer) quantitySpinner.getValue();
 
-        // Kiểm tra xem sản phẩm đã có trong giỏ chưa bằng ID (Cột ẩn index 3)
+        // Check if product exists in cart using ID (Hidden column index 3)
         for (int i = 0; i < cartModel.getRowCount(); i++) {
-            // Lấy ID từ cột ẩn (index 3) của bảng giỏ hàng
+            // Get ID from hidden column (index 3) of cart table
             Object idObj = cartModel.getValueAt(i, 3);
             if (idObj instanceof Integer && ((Integer) idObj) == productId) {
-                // Nếu tìm thấy ID trùng, chỉ cập nhật số lượng
+                // If found matching ID, only update quantity
                 int currentQuantity = (Integer) cartModel.getValueAt(i, 1);
                 int newQuantity = currentQuantity + quantityToAdd;
                 double newSubtotal = newQuantity * price;
@@ -484,10 +481,10 @@ public class OrderPanel extends JPanel {
             }
         }
 
-        // Nếu chưa có, thêm dòng mới vào giỏ hàng
+        // If not exists, add new row to cart
         double subtotal = price * quantityToAdd;
-        // Fix Bug 6: Thêm ID vào cột thứ 4 (Cột này đã được ẩn đi trên giao diện)
-        // Mục đích: Lưu trữ ID để dùng khi tạo đơn hàng (Create Order)
+        // Bug 6 Fix: Add ID to the 4th column (Hidden column in UI)
+        // Purpose: Store ID to use when creating order (Create Order)
         cartModel.addRow(new Object[] { productName, quantityToAdd, subtotal, productId });
         updateTotal();
     }
@@ -495,8 +492,8 @@ public class OrderPanel extends JPanel {
     private void handleRemoveFromCart() {
         int selectedRow = cartTable.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một sản phẩm trong giỏ hàng để xóa!",
-                    "Chưa chọn sản phẩm", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a product in cart to remove!",
+                    "No Selection", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -596,6 +593,43 @@ public class OrderPanel extends JPanel {
         String confirmMessage = String.format("Create order:\nCustomer: %s\nTable: %s\nDiscount: %.1f%%\nTotal: %s",
                 customerPhone, tableNumber, currentDiscountPercent, currencyFormat.format(finalTotal));
 
+        // Check stock availability BEFORE confirming
+        try {
+            Connection checkConn = database.DatabaseConnector.getConnection();
+            for (int i = 0; i < cartModel.getRowCount(); i++) {
+                int productId = (Integer) cartModel.getValueAt(i, 3);
+                String productName = (String) cartModel.getValueAt(i, 0);
+                int quantity = (Integer) cartModel.getValueAt(i, 1);
+
+                String stockSql = "SELECT stock FROM products WHERE id = ?";
+                PreparedStatement ps = checkConn.prepareStatement(stockSql);
+                ps.setInt(1, productId);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    int currentStock = rs.getInt("stock");
+                    if (currentStock < quantity) {
+                        JOptionPane.showMessageDialog(this,
+                                "Product '" + productName + "' insufficient stock!\nIn Stock: " + currentStock
+                                        + "\nRequested: " + quantity,
+                                "Out of Stock",
+                                JOptionPane.ERROR_MESSAGE);
+                        rs.close();
+                        ps.close();
+                        checkConn.close();
+                        return;
+                    }
+                }
+                rs.close();
+                ps.close();
+            }
+            checkConn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Stock check error: " + e.getMessage(), "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         int confirm = JOptionPane.showConfirmDialog(this, confirmMessage, "Confirm Order", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             try {
@@ -624,8 +658,8 @@ public class OrderPanel extends JPanel {
                     double subtotalItem = (Double) cartModel.getValueAt(i, 2);
                     double unitPrice = subtotalItem / quantity;
 
-                    // Fix Bug 6: Lấy Product ID từ cột ẩn (index 3)
-                    // Đảm bảo đơn hàng được lưu với ID sản phẩm chính xác
+                    // Bug 6 Fix: Get Product ID from hidden column (index 3)
+                    // Ensure order is saved with correct product ID
                     int productId = (Integer) cartModel.getValueAt(i, 3);
 
                     OrderDetails detail = new OrderDetails();

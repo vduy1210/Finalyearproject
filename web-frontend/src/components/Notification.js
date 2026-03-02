@@ -3,14 +3,14 @@ import React from 'react';
 import { Alert, Snackbar, Box, Typography, Chip, IconButton } from '@mui/material';
 import { CheckCircle, Info, Warning, Error, Close, LocalShipping, Restaurant, Payment } from '@mui/icons-material';
 
-const Notification = ({ 
-  open, 
-  onClose, 
-  type = 'info', 
-  title, 
-  message, 
+const Notification = ({
+  open,
+  onClose,
+  type = 'info',
+  title,
+  message,
   orderInfo = null,
-  autoHideDuration = 6000 
+  autoHideDuration = 6000
 }) => {
   // Icon mapping for different notification types
   const iconMap = {
@@ -78,47 +78,47 @@ const Notification = ({
           <Typography variant="h6" component="div" sx={{ fontWeight: 600, mb: 1 }}>
             {title}
           </Typography>
-          
+
           {/* Message */}
           <Typography variant="body2" sx={{ mb: orderInfo ? 1.5 : 0 }}>
             {message}
           </Typography>
-          
+
           {/* Order Information */}
-          {orderInfo && (
-            <Box sx={{ 
-              mt: 1, 
-              p: 1.5, 
-              backgroundColor: 'rgba(255,255,255,0.1)', 
+          {orderInfo && (orderInfo.orderId || orderInfo.items || orderInfo.totalAmount || orderInfo.tableNumber) && (
+            <Box sx={{
+              mt: 1,
+              p: 1.5,
+              backgroundColor: 'rgba(255,255,255,0.1)',
               borderRadius: 1,
               border: '1px solid rgba(255,255,255,0.2)'
             }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
                 Order Details:
               </Typography>
-              
+
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
                 {orderInfo.orderId && (
-                  <Chip 
-                    label={`Order #${orderInfo.orderId}`} 
-                    size="small" 
-                    color="primary" 
+                  <Chip
+                    label={`Order #${orderInfo.orderId}`}
+                    size="small"
+                    color="primary"
                     variant="outlined"
                   />
                 )}
                 {orderInfo.tableNumber && (
-                  <Chip 
-                    label={orderInfo.tableNumber} 
-                    size="small" 
-                    color="secondary" 
+                  <Chip
+                    label={orderInfo.tableNumber}
+                    size="small"
+                    color="secondary"
                     variant="outlined"
                   />
                 )}
                 {orderInfo.status && (
-                  <Chip 
-                    label={orderInfo.status} 
-                    size="small" 
-                    sx={{ 
+                  <Chip
+                    label={orderInfo.status}
+                    size="small"
+                    sx={{
                       backgroundColor: getStatusColor(orderInfo.status),
                       color: 'white',
                       fontWeight: 600
@@ -126,25 +126,25 @@ const Notification = ({
                   />
                 )}
               </Box>
-              
+
               {orderInfo.customerName && (
                 <Typography variant="body2" sx={{ fontSize: '0.85rem', opacity: 0.9 }}>
                   <strong>Customer:</strong> {orderInfo.customerName}
                 </Typography>
               )}
-              
+
               {orderInfo.totalAmount && (
                 <Typography variant="body2" sx={{ fontSize: '0.85rem', opacity: 0.9 }}>
-                  <strong>Total:</strong> {orderInfo.totalAmount.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'})}
+                  <strong>Total:</strong> {orderInfo.totalAmount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                 </Typography>
               )}
-              
+
               {orderInfo.estimatedTime && (
                 <Typography variant="body2" sx={{ fontSize: '0.85rem', opacity: 0.9 }}>
                   <strong>Estimated Time:</strong> {orderInfo.estimatedTime}
                 </Typography>
               )}
-              
+
               {orderInfo.items && orderInfo.items.length > 0 && (
                 <Box sx={{ mt: 1 }}>
                   <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 600 }}>

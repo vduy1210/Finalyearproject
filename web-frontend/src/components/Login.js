@@ -31,7 +31,12 @@ function Login({ setUserName }) {
       return;
     }
     try {
-      const res = await fetch("http://localhost:8081/api/users/login", {
+      // Use dynamic hostname for mobile access
+      const hostname = window.location.hostname;
+      // Default to localhost for local dev if needed, or use specific logic
+      const apiUrl = `http://${hostname}:8081/api/users/login`;
+
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })

@@ -215,61 +215,17 @@ function Cart({ cart, onRemoveFromCart, clearCart, updateCartQuantity }) {
           errorData = await res.json();
 
           // Handle customer mismatch errors specifically
-          if (errorData.conflictType === "phone_mismatch") {
-            const existingCustomer = errorData.existingCustomer;
-            setError(
-              `❌ Số điện thoại này đã được đăng ký với thông tin khác:\n\n` +
-              `📋 Thông tin đã đăng ký:\n` +
-              `• Tên: ${existingCustomer.name}\n` +
-              `• Email: ${existingCustomer.email}\n` +
-              `• SĐT: ${existingCustomer.phone}\n\n` +
-              `⚠️ Vui lòng sử dụng đúng thông tin đã đăng ký hoặc dùng số điện thoại khác.`
-            );
+          if (errorData.conflictType === "phone_mismatch" ||
+            errorData.conflictType === "email_mismatch" ||
+            errorData.conflictType === "customer_mismatch") {
 
-            notification.error(
-              "Số điện thoại đã tồn tại",
-              `Số điện thoại ${existingCustomer.phone} đã được đăng ký với tên "${existingCustomer.name}" và email "${existingCustomer.email}"`,
-              { conflictType: "phone_mismatch", existingCustomer: existingCustomer }
-            );
-
-            setSubmitting(false);
-            return;
-          }
-          else if (errorData.conflictType === "email_mismatch") {
-            const existingCustomer = errorData.existingCustomer;
-            setError(
-              `❌ Email này đã được đăng ký với số điện thoại khác:\n\n` +
-              `📋 Thông tin đã đăng ký:\n` +
-              `• Tên: ${existingCustomer.name}\n` +
-              `• SĐT: ${existingCustomer.phone}\n` +
-              `• Email: ${existingCustomer.email}\n\n` +
-              `⚠️ Vui lòng sử dụng đúng số điện thoại đã đăng ký hoặc dùng email khác.`
-            );
-
-            notification.error(
-              "Email đã tồn tại",
-              `Email ${existingCustomer.email} đã được đăng ký với tên "${existingCustomer.name}" và số điện thoại "${existingCustomer.phone}"`,
-              { conflictType: "email_mismatch", existingCustomer: existingCustomer }
-            );
-
-            setSubmitting(false);
-            return;
-          }
-          else if (errorData.conflictType === "customer_mismatch") {
-            const existingCustomer = errorData.existingCustomer;
-            setError(
-              `❌ Thông tin không khớp với tài khoản đã đăng ký:\n\n` +
-              `📋 Thông tin đã đăng ký:\n` +
-              `• Tên: ${existingCustomer.name}\n` +
-              `• Email: ${existingCustomer.email}\n` +
-              `• SĐT: ${existingCustomer.phone}\n\n` +
-              `⚠️ Vui lòng nhập đúng thông tin đã đăng ký.`
-            );
+            // Use the concise error message directly from the backend
+            setError(errorData.error);
 
             notification.error(
               "Thông tin khách hàng không khớp",
-              `Thông tin bạn nhập không khớp với tài khoản đã đăng ký.`,
-              { conflictType: "customer_mismatch", existingCustomer: existingCustomer }
+              errorData.error, // Use the backend message for notification too
+              { conflictType: errorData.conflictType, existingCustomer: errorData.existingCustomer }
             );
 
             setSubmitting(false);

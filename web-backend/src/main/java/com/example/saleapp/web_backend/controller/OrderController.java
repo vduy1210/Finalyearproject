@@ -40,6 +40,18 @@ public class OrderController {
     public ResponseEntity<?> placeOrder(@RequestBody OrderRequest orderRequest) {
         try {
             // ============================================================
+            // WEB ORDER WORKFLOW (Quy trình xử lý đơn hàng Web)
+            // ============================================================
+            // 1. Nhận request từ Web Web (OrderRequest).
+            // 2. Validate dữ liệu (Input Validation).
+            // 3. Tìm hoặc tạo mới khách hàng (Customer Handling).
+            // 4. Lấy giá sản phẩm từ Database (Server-side Pricing).
+            // 5. [SKIPPED] Trừ tồn kho (Stock Deduction) -> Đã tắt theo yêu cầu.
+            // Stock sẽ được trừ khi nhân viên xác nhận đơn ở Desktop App.
+            // 6. Lưu đơn hàng vào Database (Save Order).
+            // ============================================================
+
+            // ============================================================
             // BƯỚC 1: KIỂM TRA DỮ LIỆU ĐẦU VÀO (INPUT VALIDATION)
             // ============================================================
             // Kiểm tra tính hợp lệ của số điện thoại, email, tên để tránh lỗi hoặc tấn công
@@ -156,19 +168,8 @@ public class OrderController {
                 Product product = productRepository.findById(item.getProductId())
                         .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProductId()));
 
-                // Fix Bug 4: Cập nhật tồn kho (Atomic Update).
-                // Thực hiện trừ tồn kho ngay trong câu lệnh SQL UPDATE để đảm bảo tính toàn vẹn
-                // dữ liệu
-                // khi có nhiều người cùng mua một lúc (Concurrency).
-                // decrementStock trả về số dòng được update (1 nếu thành công, 0 nếu không đủ
-                // hàng).
-                int rowsUpdated = productRepository.decrementStock(item.getProductId(), item.getQuantity());
-
-                if (rowsUpdated == 0) {
-                    // Nếu trả về 0 nghĩa là hế hàng (stock < quantity yêu cầu).
-                    // Ném lỗi RuntimeException để kích hoạt rollback transaction bên trên.
-                    throw new RuntimeException("Insufficient stock for product: " + product.getName());
-                }
+                System.out.println("Processing item: " + product.getName() + " | Req Qty: " + item.getQuantity()
+                        + " | Current Stock: " + product.getStock());
 
                 // Tạo OrderItem với giá SERVER-SIDE
                 OrderItem orderItem = new OrderItem();
@@ -194,6 +195,17 @@ public class OrderController {
             // Gán lại quan hệ ngược chiều nếu cần thiết (dù Cascade đã lo)
             for (OrderItem item : orderItems) {
                 item.setOrder(savedOrder);
+            }
+
+            // ============================================================
+            // BƯỚC 7: CẬP NHẬT ĐIỂM TÍCH LŨY (LOYALTY POINTS) - NEW LOGIC
+            // ============================================================
+            // Logic: Cộng cố định 10 điểm cho mỗi đơn hàng (Theo yêu cầu)
+            if (customer != null) {
+                double pointsEarned = 10.0;
+                double currentPoints = (customer.getAccumulatedPoint() != null) ? customer.getAccumulatedPoint() : 0.0;
+                customer.setAccumulatedPoint(currentPoints + pointsEarned);
+                customerRepository.save(customer);
             }
 
             // Trả về kết quả thành công kèm Order ID

@@ -20,9 +20,10 @@ public class CustomerManagementPanel extends JPanel {
     private DefaultTableModel model;
     private JTable table;
     private JTextField searchField;
-    private java.text.NumberFormat currencyFormat = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.of("vi","VN"));
+    private java.text.NumberFormat currencyFormat = java.text.NumberFormat
+            .getCurrencyInstance(java.util.Locale.of("vi", "VN"));
     private Timer refreshTimer;
-    
+
     // Stat card labels to update
     private JLabel totalCustomersValue;
     private JLabel platinumValue;
@@ -44,8 +45,8 @@ public class CustomerManagementPanel extends JPanel {
     // FONT_BUTTON removed (not used)
 
     public CustomerManagementPanel() {
-        setLayout(new BorderLayout(12,12));
-        setBorder(new EmptyBorder(16,16,16,16));
+        setLayout(new BorderLayout(12, 12));
+        setBorder(new EmptyBorder(16, 16, 16, 16));
         setBackground(BACKGROUND_COLOR);
 
         // Header: title + subtitle on left, search + add on right
@@ -58,7 +59,7 @@ public class CustomerManagementPanel extends JPanel {
         title.setForeground(COLOR_TEXT);
         JLabel subtitle = new JLabel("Manage customer profiles, loyalty points, and purchase history");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        subtitle.setForeground(new Color(110,110,110));
+        subtitle.setForeground(new Color(110, 110, 110));
         titleWrap.add(title, BorderLayout.NORTH);
         titleWrap.add(subtitle, BorderLayout.SOUTH);
 
@@ -69,8 +70,13 @@ public class CustomerManagementPanel extends JPanel {
         searchField.setToolTipText("Search by name, phone, or email...");
         RoundedButton addCustomer = new RoundedButton("Add Customer");
         util.UIUtils.styleActionButton(addCustomer, 140);
-        addCustomer.setBackground(MAIN_COLOR); addCustomer.setForeground(WHITE);
-        addCustomer.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(ActionEvent e) { showAddDialog(); } });
+        addCustomer.setBackground(MAIN_COLOR);
+        addCustomer.setForeground(WHITE);
+        addCustomer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                showAddDialog();
+            }
+        });
         rightHeader.add(searchField);
         rightHeader.add(addCustomer);
 
@@ -79,25 +85,25 @@ public class CustomerManagementPanel extends JPanel {
         add(header, BorderLayout.NORTH);
 
         // Stat cards row
-        JPanel statsRow = new JPanel(new GridLayout(1,5,12,0));
+        JPanel statsRow = new JPanel(new GridLayout(1, 5, 12, 0));
         statsRow.setOpaque(false);
-        statsRow.setBorder(new EmptyBorder(12,0,12,0));
-        
-        JPanel totalCustomersCard = createStatCard("Total Customers", "0", new Color(95,165,245));
+        statsRow.setBorder(new EmptyBorder(12, 0, 12, 0));
+
+        JPanel totalCustomersCard = createStatCard("Total Customers", "0", new Color(95, 165, 245));
         totalCustomersValue = getStatCardValueLabel(totalCustomersCard);
-        
+
         JPanel platinumCard = createStatCard("Platinum", "0", new Color(148, 71, 255));
         platinumValue = getStatCardValueLabel(platinumCard);
-        
+
         JPanel goldCard = createStatCard("Gold", "0", new Color(246, 190, 66));
         goldValue = getStatCardValueLabel(goldCard);
-        
+
         JPanel totalRevenueCard = createStatCard("Total Revenue", "0", new Color(67, 181, 129));
         totalRevenueValue = getStatCardValueLabel(totalRevenueCard);
-        
+
         JPanel avgSpentCard = createStatCard("Avg Spent", "0", new Color(244, 140, 82));
         avgSpentValue = getStatCardValueLabel(avgSpentCard);
-        
+
         statsRow.add(totalCustomersCard);
         statsRow.add(platinumCard);
         statsRow.add(goldCard);
@@ -105,8 +111,12 @@ public class CustomerManagementPanel extends JPanel {
         statsRow.add(avgSpentCard);
         add(statsRow, BorderLayout.BEFORE_FIRST_LINE);
 
-        model = new DefaultTableModel(new String[]{"ID","Customer","Phone","Email","Orders","Total Spent","Points","Tier","Last Visit"}, 0) {
-            @Override public boolean isCellEditable(int row, int col) { return false; }
+        model = new DefaultTableModel(new String[] { "ID", "Customer", "Phone", "Email", "Orders", "Total Spent",
+                "Points", "Tier", "Last Visit" }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
         };
         table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -125,9 +135,11 @@ public class CustomerManagementPanel extends JPanel {
 
         DefaultTableCellRenderer alt = new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) c.setBackground((row % 2 == 0) ? TABLE_BG : ROW_ALT);
+                if (!isSelected)
+                    c.setBackground((row % 2 == 0) ? TABLE_BG : ROW_ALT);
                 return c;
             }
         };
@@ -155,7 +167,9 @@ public class CustomerManagementPanel extends JPanel {
         util.UIUtils.styleActionButton(editBtn, 100);
         util.UIUtils.styleActionButton(delBtn, 100);
         util.UIUtils.styleActionButton(configTiersBtn, 150);
-        viewBtn.setEnabled(false); editBtn.setEnabled(false); delBtn.setEnabled(false);
+        viewBtn.setEnabled(false);
+        editBtn.setEnabled(false);
+        delBtn.setEnabled(false);
         actionsPanel.add(viewBtn);
         actionsPanel.add(editBtn);
         actionsPanel.add(delBtn);
@@ -164,17 +178,40 @@ public class CustomerManagementPanel extends JPanel {
         add(actionsPanel, BorderLayout.SOUTH);
 
         // wire actions
-        viewBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(ActionEvent e) {
-            int r = table.getSelectedRow(); if (r < 0) { JOptionPane.showMessageDialog(CustomerManagementPanel.this, "Please select a customer to view.", "No Selection", JOptionPane.WARNING_MESSAGE); return; }
-            int modelRow = table.convertRowIndexToModel(r);
-            int id = (Integer) model.getValueAt(modelRow, 0);
-            showCustomerViewDialog(id);
-        } });
-        editBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(ActionEvent e) { showEditDialog(); } });
-        delBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(ActionEvent e) { deleteSelected(); } });
-        configTiersBtn.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(ActionEvent e) { showTierConfigDialog(); } });
+        viewBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                int r = table.getSelectedRow();
+                if (r < 0) {
+                    JOptionPane.showMessageDialog(CustomerManagementPanel.this, "Please select a customer to view.",
+                            "No Selection", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                int modelRow = table.convertRowIndexToModel(r);
+                int id = (Integer) model.getValueAt(modelRow, 0);
+                showCustomerViewDialog(id);
+            }
+        });
+        editBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                showEditDialog();
+            }
+        });
+        delBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteSelected();
+            }
+        });
+        configTiersBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                showTierConfigDialog();
+            }
+        });
 
-        searchField.addActionListener(new java.awt.event.ActionListener() { public void actionPerformed(ActionEvent e) { loadCustomers(); } });
+        searchField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                loadCustomers();
+            }
+        });
 
         // enable buttons on row selection
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -189,9 +226,9 @@ public class CustomerManagementPanel extends JPanel {
 
         // initial load
         loadCustomers();
-        
+
         // Auto-refresh timer: refresh every 30 seconds
-        refreshTimer = new Timer(30000, new java.awt.event.ActionListener() {
+        refreshTimer = new Timer(5000, new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 refreshCustomerData();
@@ -199,7 +236,7 @@ public class CustomerManagementPanel extends JPanel {
         });
         refreshTimer.start();
     }
-    
+
     /**
      * Public method to manually refresh customer data
      * Can be called from other panels when a new customer is added
@@ -212,7 +249,7 @@ public class CustomerManagementPanel extends JPanel {
             }
         });
     }
-    
+
     /**
      * Stop the auto-refresh timer when panel is disposed
      */
@@ -256,30 +293,31 @@ public class CustomerManagementPanel extends JPanel {
                 float points = rs.getFloat("accumulatedPoint");
                 String tier = calculateTier(points);
 
-        Object[] row = new Object[]{
-            id,
-            name,
-            phone,
-            email,
-            orders,
-            currencyFormat.format(totalSpent),
-            points,
-            tier,
-            lastVisit
-        };
+                Object[] row = new Object[] {
+                        id,
+                        name,
+                        phone,
+                        email,
+                        orders,
+                        currencyFormat.format(totalSpent),
+                        points,
+                        tier,
+                        lastVisit
+                };
                 model.addRow(row);
             }
             rs.close();
             ps.close();
-            
+
             // Update statistics after loading customers
             updateStatistics();
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error loading customers: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error loading customers: " + ex.getMessage(), "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void updateStatistics() {
         try (Connection conn = database.DatabaseConnector.getConnection()) {
             // Get total customers
@@ -292,23 +330,25 @@ public class CustomerManagementPanel extends JPanel {
             }
             rsCount.close();
             psCount.close();
-            
+
             // Count tier distribution
             int platinumCount = 0;
             int goldCount = 0;
-            
+
             String tierSql = "SELECT accumulatedPoint FROM customers";
             PreparedStatement psTier = conn.prepareStatement(tierSql);
             ResultSet rsTier = psTier.executeQuery();
             while (rsTier.next()) {
                 float points = rsTier.getFloat("accumulatedPoint");
                 String tier = calculateTier(points);
-                if (tier.contains("Platinum")) platinumCount++;
-                else if (tier.contains("Gold")) goldCount++;
+                if (tier.contains("Platinum"))
+                    platinumCount++;
+                else if (tier.contains("Gold"))
+                    goldCount++;
             }
             rsTier.close();
             psTier.close();
-            
+
             // Get total revenue from BOTH app_order and web_order
             String revenueSql = "SELECT "
                     + "(COALESCE(SUM(COALESCE(ao.total, ao.total_amount)), 0) + COALESCE(SUM(COALESCE(wo.total, wo.total_amount)), 0)) as total_revenue, "
@@ -327,10 +367,10 @@ public class CustomerManagementPanel extends JPanel {
             }
             rsRevenue.close();
             psRevenue.close();
-            
+
             // Calculate average spent
             double avgSpent = (customersWithOrders > 0) ? (totalRevenue / customersWithOrders) : 0;
-            
+
             // Update UI labels
             if (totalCustomersValue != null) {
                 totalCustomersValue.setText(String.valueOf(totalCustomers));
@@ -347,7 +387,7 @@ public class CustomerManagementPanel extends JPanel {
             if (avgSpentValue != null) {
                 avgSpentValue.setText(currencyFormat.format(avgSpent));
             }
-            
+
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -356,7 +396,8 @@ public class CustomerManagementPanel extends JPanel {
     private JPanel createStatCard(String title, String value, Color bg) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(COLOR_BORDER), new EmptyBorder(12,12,12,12)));
+        card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(COLOR_BORDER),
+                new EmptyBorder(12, 12, 12, 12)));
         JLabel t = new JLabel(title);
         t.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         t.setForeground(COLOR_TEXT);
@@ -368,7 +409,7 @@ public class CustomerManagementPanel extends JPanel {
         card.add(v, BorderLayout.CENTER);
         return card;
     }
-    
+
     private JLabel getStatCardValueLabel(JPanel card) {
         for (Component c : card.getComponents()) {
             if (c instanceof JLabel && "valueLabel".equals(c.getName())) {
@@ -382,7 +423,11 @@ public class CustomerManagementPanel extends JPanel {
 
     private void showCustomerViewDialog(int customerId) {
         // basic view: show recent orders for customer
-        DefaultTableModel m = new DefaultTableModel(new String[]{"Order ID","Date","Total"},0) { public boolean isCellEditable(int r,int c){return false;} };
+        DefaultTableModel m = new DefaultTableModel(new String[] { "Order ID", "Date", "Total" }, 0) {
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
+        };
         try (Connection conn = database.DatabaseConnector.getConnection()) {
             String sql = "SELECT o.order_id, o.order_date, COALESCE(o.total, o.total_amount) as total FROM web_order o WHERE o.customer_id = ? ORDER BY o.order_date DESC LIMIT 20";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -390,20 +435,25 @@ public class CustomerManagementPanel extends JPanel {
             ResultSet rs = ps.executeQuery();
             java.time.format.DateTimeFormatter df = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             while (rs.next()) {
-                Object[] r = new Object[]{ rs.getInt("order_id"), rs.getTimestamp("order_date").toLocalDateTime().format(df), currencyFormat.format(rs.getDouble("total")) };
+                Object[] r = new Object[] { rs.getInt("order_id"),
+                        rs.getTimestamp("order_date").toLocalDateTime().format(df),
+                        currencyFormat.format(rs.getDouble("total")) };
                 m.addRow(r);
             }
-            rs.close(); ps.close();
-        } catch (SQLException ex) { ex.printStackTrace(); }
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
 
         JTable t = new JTable(m);
         t.setRowHeight(36);
         JScrollPane sp = new JScrollPane(t);
         JPanel main = new JPanel(new BorderLayout());
         main.add(sp, BorderLayout.CENTER);
-        JDialog d = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Customer #"+customerId, true);
+        JDialog d = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Customer #" + customerId, true);
         d.getContentPane().add(main);
-        d.setSize(600,400);
+        d.setSize(600, 400);
         d.setLocationRelativeTo(this);
         d.setVisible(true);
     }
@@ -412,9 +462,10 @@ public class CustomerManagementPanel extends JPanel {
         JTextField name = new JTextField();
         JTextField phone = new JTextField();
         JTextField email = new JTextField();
-        Object[] fields = {"Name:", name, "Phone:", phone, "Email:", email};
+        Object[] fields = { "Name:", name, "Phone:", phone, "Email:", email };
         int ok = JOptionPane.showConfirmDialog(this, fields, "Add Customer", JOptionPane.OK_CANCEL_OPTION);
-        if (ok != JOptionPane.OK_OPTION) return;
+        if (ok != JOptionPane.OK_OPTION)
+            return;
         try (Connection conn = database.DatabaseConnector.getConnection()) {
             String sql = "INSERT INTO customers(name, phone, email) VALUES(?, ?, ?)";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -426,20 +477,26 @@ public class CustomerManagementPanel extends JPanel {
             loadCustomers();
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error adding customer: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error adding customer: " + ex.getMessage(), "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void showEditDialog() {
         int r = table.getSelectedRow();
-        if (r < 0) { JOptionPane.showMessageDialog(this, "Please select a customer to edit.", "No Selection", JOptionPane.WARNING_MESSAGE); return; }
+        if (r < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a customer to edit.", "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int id = (Integer) model.getValueAt(r, 0);
         JTextField name = new JTextField((String) model.getValueAt(r, 1));
         JTextField phone = new JTextField((String) model.getValueAt(r, 2));
         JTextField email = new JTextField((String) model.getValueAt(r, 3));
-        Object[] fields = {"Name:", name, "Phone:", phone, "Email:", email};
+        Object[] fields = { "Name:", name, "Phone:", phone, "Email:", email };
         int ok = JOptionPane.showConfirmDialog(this, fields, "Edit Customer", JOptionPane.OK_CANCEL_OPTION);
-        if (ok != JOptionPane.OK_OPTION) return;
+        if (ok != JOptionPane.OK_OPTION)
+            return;
         try (Connection conn = database.DatabaseConnector.getConnection()) {
             String sql = "UPDATE customers SET name = ?, phone = ?, email = ? WHERE id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -452,20 +509,26 @@ public class CustomerManagementPanel extends JPanel {
             loadCustomers();
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error updating customer: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error updating customer: " + ex.getMessage(), "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void deleteSelected() {
         int r = table.getSelectedRow();
-        if (r < 0) { JOptionPane.showMessageDialog(this, "Please select a customer to delete.", "No Selection", JOptionPane.WARNING_MESSAGE); return; }
+        if (r < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a customer to delete.", "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int id = (Integer) model.getValueAt(r, 0);
         String customerName = (String) model.getValueAt(r, 1);
-        
+
         // Check if customer has existing orders
         try (Connection conn = database.DatabaseConnector.getConnection()) {
             // Check app_order
-            PreparedStatement psCheckApp = conn.prepareStatement("SELECT COUNT(*) as cnt FROM app_order WHERE customer_id = ?");
+            PreparedStatement psCheckApp = conn
+                    .prepareStatement("SELECT COUNT(*) as cnt FROM app_order WHERE customer_id = ?");
             psCheckApp.setInt(1, id);
             ResultSet rsApp = psCheckApp.executeQuery();
             int appOrderCount = 0;
@@ -474,9 +537,10 @@ public class CustomerManagementPanel extends JPanel {
             }
             rsApp.close();
             psCheckApp.close();
-            
+
             // Check web_order
-            PreparedStatement psCheckWeb = conn.prepareStatement("SELECT COUNT(*) as cnt FROM web_order WHERE customer_id = ?");
+            PreparedStatement psCheckWeb = conn
+                    .prepareStatement("SELECT COUNT(*) as cnt FROM web_order WHERE customer_id = ?");
             psCheckWeb.setInt(1, id);
             ResultSet rsWeb = psCheckWeb.executeQuery();
             int webOrderCount = 0;
@@ -485,121 +549,138 @@ public class CustomerManagementPanel extends JPanel {
             }
             rsWeb.close();
             psCheckWeb.close();
-            
+
             int totalOrders = appOrderCount + webOrderCount;
-            
+
             if (totalOrders > 0) {
                 // Customer has orders - offer options
-                String[] options = {"Cancel", "Remove Orders & Delete Customer", "Set Orders to NULL & Delete Customer"};
+                String[] options = { "Cancel", "Remove Orders & Delete Customer",
+                        "Set Orders to NULL & Delete Customer" };
                 int choice = JOptionPane.showOptionDialog(
-                    this,
-                    "Customer '" + customerName + "' has " + totalOrders + " order(s).\n\n" +
-                    "Choose an action:\n" +
-                    "- Remove Orders: Delete all orders and customer (cannot be undone)\n" +
-                    "- Set to NULL: Keep orders but remove customer reference",
-                    "Customer Has Orders",
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.WARNING_MESSAGE,
-                    null,
-                    options,
-                    options[0]
-                );
-                
+                        this,
+                        "Customer '" + customerName + "' has " + totalOrders + " order(s).\n\n" +
+                                "Choose an action:\n" +
+                                "- Remove Orders: Delete all orders and customer (cannot be undone)\n" +
+                                "- Set to NULL: Keep orders but remove customer reference",
+                        "Customer Has Orders",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        options[0]);
+
                 if (choice == 1) {
                     // Delete orders first, then customer
-                    PreparedStatement psDelAppDetails = conn.prepareStatement("DELETE FROM app_order_details WHERE order_id IN (SELECT order_id FROM app_order WHERE customer_id = ?)");
+                    PreparedStatement psDelAppDetails = conn.prepareStatement(
+                            "DELETE FROM app_order_details WHERE order_id IN (SELECT order_id FROM app_order WHERE customer_id = ?)");
                     psDelAppDetails.setInt(1, id);
                     psDelAppDetails.executeUpdate();
                     psDelAppDetails.close();
-                    
+
                     PreparedStatement psDelApp = conn.prepareStatement("DELETE FROM app_order WHERE customer_id = ?");
                     psDelApp.setInt(1, id);
                     psDelApp.executeUpdate();
                     psDelApp.close();
-                    
-                    PreparedStatement psDelWebDetails = conn.prepareStatement("DELETE FROM web_order_details WHERE order_id IN (SELECT order_id FROM web_order WHERE customer_id = ?)");
+
+                    PreparedStatement psDelWebDetails = conn.prepareStatement(
+                            "DELETE FROM web_order_details WHERE order_id IN (SELECT order_id FROM web_order WHERE customer_id = ?)");
                     psDelWebDetails.setInt(1, id);
                     psDelWebDetails.executeUpdate();
                     psDelWebDetails.close();
-                    
+
                     PreparedStatement psDelWeb = conn.prepareStatement("DELETE FROM web_order WHERE customer_id = ?");
                     psDelWeb.setInt(1, id);
                     psDelWeb.executeUpdate();
                     psDelWeb.close();
-                    
+
                     PreparedStatement psDel = conn.prepareStatement("DELETE FROM customers WHERE id = ?");
                     psDel.setInt(1, id);
                     psDel.executeUpdate();
                     psDel.close();
-                    
-                    JOptionPane.showMessageDialog(this, "Customer and all associated orders deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+                    JOptionPane.showMessageDialog(this, "Customer and all associated orders deleted successfully.",
+                            "Success", JOptionPane.INFORMATION_MESSAGE);
                     loadCustomers();
                 } else if (choice == 2) {
                     // Set customer_id to NULL in orders, then delete customer
-                    PreparedStatement psNullApp = conn.prepareStatement("UPDATE app_order SET customer_id = NULL WHERE customer_id = ?");
+                    PreparedStatement psNullApp = conn
+                            .prepareStatement("UPDATE app_order SET customer_id = NULL WHERE customer_id = ?");
                     psNullApp.setInt(1, id);
                     psNullApp.executeUpdate();
                     psNullApp.close();
-                    
-                    PreparedStatement psNullWeb = conn.prepareStatement("UPDATE web_order SET customer_id = NULL WHERE customer_id = ?");
+
+                    PreparedStatement psNullWeb = conn
+                            .prepareStatement("UPDATE web_order SET customer_id = NULL WHERE customer_id = ?");
                     psNullWeb.setInt(1, id);
                     psNullWeb.executeUpdate();
                     psNullWeb.close();
-                    
+
                     PreparedStatement psDel = conn.prepareStatement("DELETE FROM customers WHERE id = ?");
                     psDel.setInt(1, id);
                     psDel.executeUpdate();
                     psDel.close();
-                    
-                    JOptionPane.showMessageDialog(this, "Customer deleted. Orders preserved with NULL customer reference.", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+                    JOptionPane.showMessageDialog(this,
+                            "Customer deleted. Orders preserved with NULL customer reference.", "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadCustomers();
                 }
                 // If choice == 0 or closed, do nothing (cancelled)
             } else {
                 // No orders - safe to delete directly
-                int confirm = JOptionPane.showConfirmDialog(this, "Delete customer '" + customerName + "'?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+                int confirm = JOptionPane.showConfirmDialog(this, "Delete customer '" + customerName + "'?",
+                        "Confirm Delete", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
                     PreparedStatement ps = conn.prepareStatement("DELETE FROM customers WHERE id = ?");
                     ps.setInt(1, id);
                     ps.executeUpdate();
                     ps.close();
-                    JOptionPane.showMessageDialog(this, "Customer deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Customer deleted successfully.", "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadCustomers();
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error deleting customer: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error deleting customer: " + ex.getMessage(), "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
     // Tier configuration using Java Preferences
-    private static final java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(CustomerManagementPanel.class);
-    
+    private static final java.util.prefs.Preferences prefs = java.util.prefs.Preferences
+            .userNodeForPackage(CustomerManagementPanel.class);
+
     private String calculateTier(float points) {
-        if (points >= prefs.getFloat("platinum_min", 10000)) return "Platinum (" + prefs.getFloat("platinum_discount", 15) + "%)";
-        if (points >= prefs.getFloat("gold_min", 5000)) return "Gold (" + prefs.getFloat("gold_discount", 10) + "%)";
-        if (points >= prefs.getFloat("silver_min", 1000)) return "Silver (" + prefs.getFloat("silver_discount", 5) + "%)";
+        if (points >= prefs.getFloat("platinum_min", 10000))
+            return "Platinum (" + prefs.getFloat("platinum_discount", 15) + "%)";
+        if (points >= prefs.getFloat("gold_min", 5000))
+            return "Gold (" + prefs.getFloat("gold_discount", 10) + "%)";
+        if (points >= prefs.getFloat("silver_min", 1000))
+            return "Silver (" + prefs.getFloat("silver_discount", 5) + "%)";
         return "Bronze (" + prefs.getFloat("bronze_discount", 0) + "%)";
     }
-    
+
     public static float getDiscountForPoints(float points) {
-        if (points >= prefs.getFloat("platinum_min", 10000)) return prefs.getFloat("platinum_discount", 15);
-        if (points >= prefs.getFloat("gold_min", 5000)) return prefs.getFloat("gold_discount", 10);
-        if (points >= prefs.getFloat("silver_min", 1000)) return prefs.getFloat("silver_discount", 5);
+        if (points >= prefs.getFloat("platinum_min", 10000))
+            return prefs.getFloat("platinum_discount", 15);
+        if (points >= prefs.getFloat("gold_min", 5000))
+            return prefs.getFloat("gold_discount", 10);
+        if (points >= prefs.getFloat("silver_min", 1000))
+            return prefs.getFloat("silver_discount", 5);
         return prefs.getFloat("bronze_discount", 0);
     }
 
     private void showTierConfigDialog() {
         JPanel panel = new JPanel(new GridLayout(0, 3, 10, 10));
         panel.setBorder(new EmptyBorder(15, 15, 15, 15));
-        
+
         // Bronze
         panel.add(new JLabel("Bronze (0 - " + (prefs.getFloat("silver_min", 1000) - 1) + " pts):"));
         JTextField bronzeDiscount = new JTextField(String.valueOf(prefs.getFloat("bronze_discount", 0)));
         panel.add(bronzeDiscount);
         panel.add(new JLabel("% discount"));
-        
+
         // Silver
         JTextField silverMin = new JTextField(String.valueOf(prefs.getFloat("silver_min", 1000)));
         JTextField silverDiscount = new JTextField(String.valueOf(prefs.getFloat("silver_discount", 5)));
@@ -609,7 +690,7 @@ public class CustomerManagementPanel extends JPanel {
         panel.add(new JLabel("Silver Discount:"));
         panel.add(silverDiscount);
         panel.add(new JLabel("% discount"));
-        
+
         // Gold
         JTextField goldMin = new JTextField(String.valueOf(prefs.getFloat("gold_min", 5000)));
         JTextField goldDiscount = new JTextField(String.valueOf(prefs.getFloat("gold_discount", 10)));
@@ -619,7 +700,7 @@ public class CustomerManagementPanel extends JPanel {
         panel.add(new JLabel("Gold Discount:"));
         panel.add(goldDiscount);
         panel.add(new JLabel("% discount"));
-        
+
         // Platinum
         JTextField platinumMin = new JTextField(String.valueOf(prefs.getFloat("platinum_min", 10000)));
         JTextField platinumDiscount = new JTextField(String.valueOf(prefs.getFloat("platinum_discount", 15)));
@@ -629,10 +710,10 @@ public class CustomerManagementPanel extends JPanel {
         panel.add(new JLabel("Platinum Discount:"));
         panel.add(platinumDiscount);
         panel.add(new JLabel("% discount"));
-        
-        int result = JOptionPane.showConfirmDialog(this, panel, "Configure Customer Tiers", 
-            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Configure Customer Tiers",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
         if (result == JOptionPane.OK_OPTION) {
             try {
                 // Save configurations
@@ -643,26 +724,26 @@ public class CustomerManagementPanel extends JPanel {
                 prefs.putFloat("gold_discount", Float.parseFloat(goldDiscount.getText().trim()));
                 prefs.putFloat("platinum_min", Float.parseFloat(platinumMin.getText().trim()));
                 prefs.putFloat("platinum_discount", Float.parseFloat(platinumDiscount.getText().trim()));
-                
+
                 prefs.flush(); // Save to disk
-                
-                JOptionPane.showMessageDialog(this, 
-                    "Tier configuration saved successfully!\nCustomer list will be refreshed.", 
-                    "Success", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                
+
+                JOptionPane.showMessageDialog(this,
+                        "Tier configuration saved successfully!\nCustomer list will be refreshed.",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
                 loadCustomers(); // Refresh the table with new tier calculations
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, 
-                    "Invalid number format. Please enter valid numbers.", 
-                    "Input Error", 
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Invalid number format. Please enter valid numbers.",
+                        "Input Error",
+                        JOptionPane.ERROR_MESSAGE);
             } catch (java.util.prefs.BackingStoreException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, 
-                    "Error saving configuration: " + ex.getMessage(), 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Error saving configuration: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

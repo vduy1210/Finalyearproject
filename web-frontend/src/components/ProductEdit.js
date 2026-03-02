@@ -36,7 +36,8 @@ function ProductEdit({ product, onImageUploaded }) {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    fetch(`http://localhost:8081/api/products/${product.id}/image`, {
+    const hostname = window.location.hostname;
+    fetch(`http://${hostname}:8081/api/products/${product.id}/image`, {
       method: "POST",
       body: formData,
     })
@@ -66,8 +67,9 @@ function ProductEdit({ product, onImageUploaded }) {
 
   function handleDescriptionSave() {
     setSavingDescription(true);
-    
-    fetch(`http://localhost:8081/api/products/${product.id}`, {
+
+    const hostname = window.location.hostname;
+    fetch(`http://${hostname}:8081/api/products/${product.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -225,7 +227,7 @@ function ProductEdit({ product, onImageUploaded }) {
         {product.imageUrl && !localImageUrl && (
           <div>
             <div style={{ color: "#64b5f6", fontWeight: 500, marginBottom: 4 }}>Current Server Image</div>
-            <img src={`http://localhost:8081${encodeURI(product.imageUrl)}`} alt={product.name} style={imageStyle} />
+            <img src={`http://${window.location.hostname}:8081${encodeURI(product.imageUrl)}`} alt={product.name} style={imageStyle} />
           </div>
         )}
         {/* Show message if no image */}
@@ -264,7 +266,7 @@ function ProductEdit({ product, onImageUploaded }) {
           Type: {selectedFile.type}<br />
         </div>
       )}
-      
+
       {/* Description Edit Section */}
       <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1.5px solid #bbdefb" }}>
         <div style={{ color: "#1976d2", fontWeight: 600, marginBottom: 6 }}>Product Description</div>

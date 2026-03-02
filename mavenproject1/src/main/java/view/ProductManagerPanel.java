@@ -74,11 +74,10 @@ public class ProductManagerPanel extends JPanel {
         tableCard.setBackground(COLOR_CARD);
         tableCard.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(COLOR_BORDER),
-                new EmptyBorder(8, 8, 8, 8)
-        ));
+                new EmptyBorder(8, 8, 8, 8)));
 
         // Table model and table
-        String[] columnNames = {"No.", "Name", "Price", "Stock"};
+        String[] columnNames = { "No.", "Name", "Price", "Stock" };
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -104,7 +103,8 @@ public class ProductManagerPanel extends JPanel {
         // Alternating row background
         DefaultTableCellRenderer altRenderer = new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (!isSelected) {
                     c.setBackground((row % 2 == 0) ? TABLE_BG : ROW_ALT);
@@ -115,8 +115,10 @@ public class ProductManagerPanel extends JPanel {
         // Name column renderer to be a bit bolder for emphasis
         DefaultTableCellRenderer nameRenderer = new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = altRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+                Component c = altRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+                        column);
                 c.setFont(FONT_TABLE.deriveFont(Font.BOLD));
                 return c;
             }
@@ -143,10 +145,10 @@ public class ProductManagerPanel extends JPanel {
             }
         });
 
-    JScrollPane scrollPane = new JScrollPane(productTable);
+        JScrollPane scrollPane = new JScrollPane(productTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-    // Match viewport background to table bg so edges look seamless
-    scrollPane.getViewport().setBackground(TABLE_BG);
+        // Match viewport background to table bg so edges look seamless
+        scrollPane.getViewport().setBackground(TABLE_BG);
         tableCard.add(scrollPane, BorderLayout.CENTER);
 
         add(tableCard, BorderLayout.CENTER);
@@ -165,42 +167,64 @@ public class ProductManagerPanel extends JPanel {
         searchField.putClientProperty("JTextField.placeholderText", "Search products...");
         searchField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(COLOR_BORDER),
-                new EmptyBorder(8, 10, 8, 10)
-        ));
+                new EmptyBorder(8, 10, 8, 10)));
 
         // Live filter
         searchField.getDocument().addDocumentListener(new DocumentListener() {
             private void update() {
                 String text = searchField.getText();
+                // Lọc bảng theo thời gian thực (Regex Filter) dựa trên tên sản phẩm
                 if (text == null || text.trim().isEmpty()) {
                     rowSorter.setRowFilter(null);
                 } else {
                     rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(text.trim()), 1));
                 }
             }
-            @Override public void insertUpdate(DocumentEvent e) { update(); }
-            @Override public void removeUpdate(DocumentEvent e) { update(); }
-            @Override public void changedUpdate(DocumentEvent e) { update(); }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                update();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                update();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                update();
+            }
         });
 
         JButton addBtn = createPrimaryButton("Add");
         addBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override public void actionPerformed(java.awt.event.ActionEvent e) { openAddProductDialog(); }
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                openAddProductDialog();
+            }
         });
 
         JButton editBtn = createDefaultButton("Edit");
         editBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override public void actionPerformed(java.awt.event.ActionEvent e) { openEditDialog(); }
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                openEditDialog();
+            }
         });
 
         JButton deleteBtn = createDangerButton("Delete");
         deleteBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override public void actionPerformed(java.awt.event.ActionEvent e) { deleteSelectedProduct(); }
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                deleteSelectedProduct();
+            }
         });
 
         JButton refreshBtn = createDefaultButton("Refresh");
         refreshBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override public void actionPerformed(java.awt.event.ActionEvent e) {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
                 searchField.setText("");
                 loadProductData();
             }
@@ -218,12 +242,13 @@ public class ProductManagerPanel extends JPanel {
         tableModel.setRowCount(0);
         productIdList.clear();
 
+        // Lấy danh sách sản phẩm từ DB thông qua DAO
         java.util.List<Object[]> productList = ProductDAO.getAllProducts();
         int index = 1;
         for (Object[] row : productList) {
             int id = (int) row[0];
-            productIdList.add(id);
-            Object[] displayRow = {index++, row[1], row[2], row[3]};
+            productIdList.add(id); // Lưu ID vào list riêng để xử lý edit/delete
+            Object[] displayRow = { index++, row[1], row[2], row[3] };
             tableModel.addRow(displayRow);
         }
         if (rowSorter != null) {
@@ -238,7 +263,8 @@ public class ProductManagerPanel extends JPanel {
     private void openEditDialog() {
         int selectedViewRow = productTable.getSelectedRow();
         if (selectedViewRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a product to edit!", "No Selection", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a product to edit!", "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
         int modelRow = productTable.convertRowIndexToModel(selectedViewRow);
@@ -249,45 +275,51 @@ public class ProductManagerPanel extends JPanel {
     private void deleteSelectedProduct() {
         int selectedViewRow = productTable.getSelectedRow();
         if (selectedViewRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a product to delete!", "No Selection", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select a product to delete!", "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this product?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this product?",
+                "Confirm Deletion", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
+            // Chuyển đổi index từ View (sau khi sort/filter) sang Model để lấy đúng dữ liệu
             int modelRow = productTable.convertRowIndexToModel(selectedViewRow);
             int productId = productIdList.get(modelRow);
-            
+
             try {
                 boolean deleted = ProductDAO.deleteProduct(productId);
                 if (deleted) {
-                    JOptionPane.showMessageDialog(this, "Product deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Product deleted successfully!", "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadProductData();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Failed to delete product.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Failed to delete product.", "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (RuntimeException e) {
-                JOptionPane.showMessageDialog(this, 
-                    "Cannot delete product!\n\n" + 
-                    e.getMessage() + "\n\n" +
-                    "This product has existing orders in the system.\n" +
-                    "To maintain order history, products with orders cannot be deleted.", 
-                    "Delete Restricted", 
-                    JOptionPane.WARNING_MESSAGE);
+                // Bắt lỗi ràng buộc khóa ngoại (Foreign Key Constraint) nếu sản phẩm đã có đơn
+                // hàng
+                JOptionPane.showMessageDialog(this,
+                        "Cannot delete product!\n\n" +
+                                e.getMessage() + "\n\n" +
+                                "This product has existing orders in the system.\n" +
+                                "To maintain order history, products with orders cannot be deleted.",
+                        "Delete Restricted",
+                        JOptionPane.WARNING_MESSAGE);
             }
         }
     }
 
     private JButton baseButton(String text) {
-    JButton button = new RoundedButton(text);
-    util.UIUtils.styleActionButton(button, 140);
+        JButton button = new RoundedButton(text);
+        util.UIUtils.styleActionButton(button, 140);
         button.setFont(FONT_BUTTON);
         button.setFocusPainted(false);
-    button.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(COLOR_BORDER),
-        new EmptyBorder(10, 16, 10, 16)
-    ));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER),
+                new EmptyBorder(10, 16, 10, 16)));
         button.setBackground(Color.WHITE);
         button.setForeground(COLOR_TEXT);
         return button;
